@@ -744,12 +744,13 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   // Remove Access: owner picks who gets this CRM's open customers, then confirms.
   function openRemoveBox(username){
     if(S.write)return;const u=(S.users||[]).find(x=>x.username===username);if(!u)return;
-    const others=[...new Set((S.users||[]).filter(x=>x.active&&x.teamMemberName&&x.teamMemberName!==u.teamMemberName).map(x=>x.teamMemberName))];
+    const others=[...new Set([...(S.team||[]),...(S.users||[]).filter(x=>x.active&&x.teamMemberName).map(x=>x.teamMemberName)])].filter(n=>n&&n!==u.teamMemberName);
     const open=Number(u.openCustomers)||0;S.removeUser=u.username;
     $('removeTitle').textContent=u.active?u.displayName+' ka access hatana hai?':u.displayName+' ke customers doosre CRM ko dene hain?';
     $('removeText').textContent=(u.active?'Login turant band ho jaayega. ':'')+(open?'Iske '+open+' chalu customer hain. Neeche chuno ki ye kisko milenge — follow-up date wahi rahegi, pending visit bhi saath jaayegi.':'Iske paas koi chalu customer nahi hai.');
     $('removePickWrap').hidden=!open;
     $('removeTo').innerHTML='<option value="">— CRM chuno —</option>'+others.map(n=>'<option>'+esc(n)+'</option>').join('');
+    if(open&&!others.length)$('removeText').textContent+=' Abhi koi doosra CRM nahi hai — pehle upar se naya CRM user banao, phir access hatao.';
     $('removeConfirm').textContent=u.active?(open?'Access hatao + customers do':'Haan, access hatao'):'Customers do';
     $('removeBox').hidden=false;notice('usersMessage','');$('removeBox').scrollIntoView({block:'nearest'});
   }
