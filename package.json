@@ -1,0 +1,11 @@
+{
+  "name": "rkgarg-crm",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --no-warnings test/api_test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

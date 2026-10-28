@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101828">
+<title>Smart CRM</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e4e7ec;--nav:#101828;--blue:#2563eb;--green:#15803d;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Segoe UI,Arial,sans-serif}button,input,select,textarea{font:inherit}button,a.btn{cursor:pointer}button:disabled{opacity:.55;cursor:wait}button,input,select,textarea,a{outline-offset:3px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #93c5fd}[hidden]{display:none!important}.top{background:var(--nav);color:white;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 20px;min-height:76px}.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:850}.brand img{width:56px;height:40px;object-fit:contain;border-radius:4px}.brand small{display:block;font-size:11px;color:#c1cad8;font-weight:400;margin-top:3px}.nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.nav button{background:#1d2939;color:#e4e7ec;border:1px solid #344054;border-radius:9px;padding:10px;font-size:12px;font-weight:700}.nav button.active{background:white;color:#101828}.navUser{font-size:12px;margin-right:6px}.wrap{max-width:1450px;padding:22px;margin:auto}.center{max-width:1020px;margin:auto;padding:22px}.head,.section,.actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}h1,h2,h3,p{margin-top:0}h1{font-size:27px;margin-bottom:5px}h2{font-size:21px}h3{font-size:17px}.sub,.small{font-size:12px;color:var(--muted);line-height:1.6}.card,.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:14px}.panel{box-shadow:0 8px 24px #10182808}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}.kpi{padding:16px;background:white;border:1px solid var(--line);border-radius:13px}.kpi strong{font-size:28px;display:block;margin:5px 0}.kpi span{font-size:12px;color:var(--muted)}.kpi .icon{font-size:18px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:#475467}input,select,textarea{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:9px;background:white;color:var(--ink)}textarea{min-height:90px;resize:vertical}fieldset{border:0;padding:0;margin:0;min-width:0}.btn,.primary{padding:10px 14px;border-radius:9px;border:1px solid #d0d5dd;background:white;font-size:13px;font-weight:750;text-decoration:none;color:var(--ink);display:inline-block}.primary{background:var(--blue);border-color:var(--blue);color:white}.wide{width:100%;padding:14px;margin-top:15px}.call{display:block;background:var(--green);color:white;text-align:center;font-size:17px;padding:15px;border-radius:11px;text-decoration:none;font-weight:800;margin-top:16px}.notice{border-radius:10px;padding:12px 14px;margin:12px 0;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}.notice.err{background:#fef3f2;color:#912018;border:1px solid #fecdca}.notice.ok{background:#ecfdf3;color:#067647;border:1px solid #abefc6}.notice.warn{background:#fffaeb;color:#854a0e;border:1px solid #fedf89}.notice.info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}.badge{display:inline-block;font-size:11px;font-weight:750;border-radius:30px;padding:5px 9px;background:#eaf0ff;color:#1d4ed8}.badge.red{background:#fee2e2;color:#991b1b}.customer{font-size:29px;font-weight:850;margin:6px 0;overflow-wrap:anywhere}.mobile{font-size:22px;font-weight:750}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.meta>div{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:12px;overflow-wrap:anywhere}.meta strong{display:block;margin-top:5px}.responses{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}.resp{padding:13px 8px;background:white;border:1px solid #d0d5dd;border-radius:9px;font-weight:700;font-size:13px}.resp.sel{background:#eff6ff;border-color:var(--blue);color:#1d4ed8}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:white}table{width:100%;border-collapse:collapse}th,td{font-size:12px;padding:12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}th{background:#f9fafb;color:#475467;font-size:11px}.linkbutton{border:0;background:none;color:#1d4ed8;text-align:left;padding:0;font-weight:750;font-size:13px}.empty{padding:36px 16px;text-align:center;color:var(--muted);line-height:1.7}.review{background:white;border:1px solid var(--line);padding:18px;border-radius:14px;margin:12px 0}.oldrows{padding:10px;background:#f9fafb;border-radius:8px;margin:12px 0}.oldrow{padding:7px 0;font-size:12px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.review-actions{display:flex;flex-wrap:wrap;gap:8px}.pager{display:flex;align-items:center;gap:12px;justify-content:center;margin:15px 0}.search{max-width:350px}.divider{border:0;border-top:1px solid var(--line);margin:20px 0}.loginScreen{min-height:100vh;display:grid;place-items:center;padding:24px}.loginbox{width:100%;max-width:365px;padding:28px;background:white;border:1px solid var(--line);border-radius:18px}.loginbox img{height:65px;display:block;margin:0 auto 16px}.loginbox label{margin-top:13px}.loginbox h1{text-align:center}.loginbox .sub{text-align:center}.overlay{position:fixed;inset:0;background:#10182877;z-index:40}.drawer{position:fixed;right:0;top:0;bottom:0;width:min(480px,100%);overflow:auto;background:white;z-index:50;padding:24px;box-shadow:-10px 0 35px #10182833}.timeline{border-left:2px solid var(--line);padding-left:18px;margin:20px 0}.event{margin-bottom:17px;overflow-wrap:anywhere}.event .date{color:var(--muted);font-size:12px}.event .text{font-size:13px;white-space:pre-wrap;margin-top:4px}.draftbox pre{white-space:pre-wrap;font:inherit;font-size:12px;overflow-wrap:anywhere}.status{font-size:11px;border:1px solid #d0d5dd;border-radius:30px;padding:6px 10px;background:white;color:#475467}.page-error{max-width:1000px;margin:16px auto}.uploadbox{border:2px dashed #cfd4dc;background:#fcfcfd;border-radius:13px;padding:22px;margin:16px 0}.uploadbox input{background:white}.noteText{white-space:pre-wrap;overflow-wrap:anywhere}.help{font-size:12px;line-height:1.6;color:var(--muted);margin:6px 0 12px}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.top{align-items:flex-start}.grid2{grid-template-columns:1fr}}@media(max-width:700px){.top{position:static;flex-direction:column;padding:14px}.nav{width:100%}.navUser{width:100%}.wrap,.center{padding:14px}.kpis{grid-template-columns:repeat(2,1fr)}.formgrid,.meta{grid-template-columns:1fr}.responses{grid-template-columns:repeat(2,1fr)}.panel,.card{padding:16px}h1{font-size:23px}.customer{font-size:25px}.search{max-width:none}.head{align-items:flex-start}.nav button{font-size:11px;padding:9px}.full{grid-column:auto}}
+.queueKpi{text-align:left;color:var(--ink);width:100%}.queueKpi:hover{border-color:var(--blue);background:#eff6ff}.queueKpi small{display:block;color:var(--blue);margin-top:8px;font-size:11px}
+</style>
+</head>
+<body>
+<main id="loginScreen" class="loginScreen">
+  <form id="loginForm" class="loginbox">
+    <img id="loginLogo" alt="RK Garg Jeans">
+    <h1>Smart CRM</h1><div class="sub">RK Garg Jeans · Login to continue</div>
+    <label for="loginUser">Username</label><input id="loginUser" autocomplete="username" required maxlength="150">
+    <label for="loginPass">Password</label><input id="loginPass" type="password" autocomplete="current-password" required>
+    <button id="loginBtn" class="primary wide" type="submit">LOGIN</button>
+    <div id="loginNotice" class="notice" role="status" hidden></div>
+  </form>
+</main>
+<div id="appShell" hidden>
+  <header class="top">
+    <div class="brand"><img id="navLogo" alt="RK Garg Jeans"><span>Smart CRM<small>RK Garg Jeans</small></span></div>
+    <nav class="nav" aria-label="Main navigation"><span id="navUser" class="navUser"></span>
+      <button data-nav="owner" data-owner>Owner Dashboard</button><button data-nav="users" data-owner>Manage Users</button><button data-nav="calls" id="callsNav">My Calls</button><button data-nav="visits" id="visitsNav">My Visits</button><button data-nav="new">+ New Lead</button><button data-nav="upload" data-owner>Bulk Old Data</button><button data-nav="legacy">Legacy Review</button><button data-nav="search">Search</button><button data-nav="edit" id="editNav" hidden>Resume Edit</button><button id="logoutBtn">Logout</button>
+    </nav>
+  </header>
+  <div id="globalNotice" class="notice page-error" role="alert" hidden></div>
+  <section id="page-owner" class="page wrap" hidden>
+    <div class="head"><div><h1>Owner Control Room</h1><div class="sub">Fresh leads, scheduled follow-ups and customer activity</div></div><div class="actions"><button id="generateExcel" class="primary" type="button">↓ Generate Excel Report</button><button id="ownerRefresh" class="btn">↻ Refresh</button></div></div>
+    <div id="excelMessage" class="notice" role="status" hidden></div><p class="help">Excel: call report uses Call report dates; visit report uses Visit dates. All current customers and all-time visits are included separately.</p>
+    <div class="panel">
+      <h2>Call report</h2>
+      <form id="callReportFilter"><div class="formgrid"><div><label for="reportFrom">From date</label><input id="reportFrom" type="date" required></div><div><label for="reportTo">To date</label><input id="reportTo" type="date" required></div></div>
+      <div class="actions" style="margin-top:14px"><div><button type="button" class="btn" id="reportToday">Today</button> <button type="button" class="btn" id="reportYesterday">Yesterday</button> <button type="button" class="btn" id="reportWeek">Last 7 days</button> <button type="button" class="btn" id="reportMonth">This month</button></div><button class="primary" type="submit" id="reportApply">Apply dates</button></div></form>
+      <div id="reportMessage" class="notice" role="status" hidden></div><div id="reportRange" class="sub" aria-live="polite"></div>
+      <div id="callReportContent" hidden>
+        <div id="reportKpis" class="kpis" style="margin-top:14px"></div>
+        <p class="small">Saved call records include Not Picked. Same customer + same day + same response updates one record; these counts are not separate dial attempts.</p>
+        <div class="grid2"><div><h3>Date-wise calls</h3><div class="tablewrap" style="max-height:360px"><table><thead><tr><th>Date</th><th>Saved calls</th><th>Unique customers</th><th>Not Picked</th></tr></thead><tbody id="reportDays"></tbody></table></div></div><div><h3>CRM-wise calls</h3><div class="tablewrap" style="max-height:360px"><table><thead><tr><th>CRM</th><th>Saved calls</th><th>Unique customers</th><th>Not Picked</th></tr></thead><tbody id="reportCrms"></tbody></table></div></div></div>
+        <h3 style="margin-top:22px">Call details — selected dates</h3>
+        <div class="tablewrap"><table><thead><tr><th>Call time (IST)</th><th>Customer</th><th>Mobile</th><th>CRM</th><th>Response</th><th>Next follow-up</th><th>Note</th></tr></thead><tbody id="reportCalls"></tbody></table></div>
+        <div class="pager"><button id="reportPrev" class="btn" disabled>Previous</button><span id="reportPage"></span><button id="reportNext" class="btn" disabled>Next</button></div>
+      </div>
+    </div>
+    <div id="visitPanel" class="panel">
+<h2>Customer visits</h2><p class="help">Confirmed shop visits only. Catalogue requests and next follow-ups are separate. Times: IST.</p>
+<h3 id="visitTotalsHeading">All-time visits</h3><div id="visitTotals" class="kpis"></div><h3>Today</h3><div id="visitKpis" class="kpis"></div><h3 id="visitUpcomingHeading">Aane wale customers</h3><div id="visitUpcomingKpis" class="kpis"></div><p id="visitUpcomingDates" class="help"></p>
+<div class="formgrid"><div><label for="visitFrom">Visit report from</label><input type="date" id="visitFrom"></div><div><label for="visitTo">To</label><input type="date" id="visitTo"></div><div><label for="visitView">Show visits</label><select id="visitView"><option value="today">Today's scheduled customers</option><option value="range">Selected date range</option><option value="upcoming">Upcoming</option><option value="overdue">Overdue</option><option value="cancelled">Cancelled — selected dates</option><option value="converted">Converted — selected dates</option><option value="datePending">Date pending</option><option value="all">All visits</option></select></div><div><button class="btn" id="visitRefresh">Refresh visits / apply dates</button></div></div>
+<div id="visitMessage" class="notice" hidden role="status"></div><h3 id="visitRangeHeading">Selected visit-date range</h3><div id="visitRangeKpis" class="kpis"></div><div id="visitStats" class="help"></div><div id="visitTeam" class="help"></div><h3 id="visitListTitle" tabindex="-1">Visit details</h3><div class="tablewrap" style="max-height:420px"><table><thead><tr><th>Customer</th><th>Mobile / CRM</th><th>Planned date</th><th>Status</th><th>Actual visit (IST)</th><th>Purchase recorded (IST)</th><th>Note</th><th>Update</th></tr></thead><tbody id="visitRows"></tbody></table></div>
+<p class="help">To plan a visit: open a customer from Search or your call card → Manage visits.</p>
+<form id="visitForm" hidden><h3 id="visitCustomer"></h3><fieldset id="visitFields"><div class="formgrid"><div><label for="vDate">Confirmed visit date</label><input type="date" id="vDate"></div><div><label for="vStatus">Visit status</label><select id="vStatus"><option>Planned</option><option>Rescheduled</option><option value="Done">Visit Done — customer aaya</option><option value="Converted">Converted — customer ne maal liya</option><option>Cancelled</option></select></div><div class="full"><label for="vNote">Visit remarks</label><textarea id="vNote" maxlength="3000"></textarea></div></div></fieldset><div class="actions"><button class="primary" id="visitSave">Save visit</button><button type="button" class="btn" id="visitCancel">Close form</button></div><p class="help">Visit Done = customer aaya. Converted = customer ne maal kharida. Done visit ko baad mein Converted kar sakte hain; arrival time preserve rahega.</p></form>
+</div>
+<details id="ownerLive"><summary class="btn">Current lead status &amp; live queue</summary><p class="help">Current pending work and today's activity. The date filter above applies to the call report only.</p>
+    <div id="ownerKpis" class="kpis"></div>
+    <div class="card"><h3>CRM Performance</h3><div class="tablewrap"><table><thead><tr><th>CRM</th><th>First call pending</th><th>Later today</th><th>Overdue / due now</th><th>Customers called today</th></tr></thead><tbody id="perfRows"></tbody></table></div><p class="help">Customers called today counts unique customers recorded in CallLog, not every dial attempt.</p></div>
+    <div class="section"><h2>Live Customer Queue</h2><div class="search"><label for="ownerSearch" class="sr">Search customer, mobile or CRM</label><input id="ownerSearch" placeholder="Customer / mobile / CRM..."></div></div>
+    <div id="ownerResultsInfo" class="help" role="status"></div>
+    <div class="tablewrap"><table><thead><tr><th>Priority</th><th>Customer</th><th>Mobile</th><th>CRM</th><th>Response</th><th>Last call</th><th>Next follow-up (IST)</th></tr></thead><tbody id="ownerRows"></tbody></table></div>
+    </details>
+  </section>
+  <section id="page-queueDetails" class="page wrap" hidden>
+    <div class="head"><div><h1 id="queueTitle">Customer list</h1><div id="queueInfo" class="sub" aria-live="polite"></div></div><div class="actions"><button class="btn" data-nav="calls">← My Calls</button><button class="btn" id="queueRefresh">Refresh / retry</button></div></div>
+    <div id="queueMessage" class="notice" hidden role="status"></div><div id="queueList"></div>
+    <div class="pager"><button class="btn" id="queuePrev" disabled>Previous</button><span id="queuePageInfo"></span><button class="btn" id="queueNext" disabled>Next</button></div>
+  </section>
+  <section id="page-visits" class="page wrap" hidden><div class="head"><div><h1>My Visits</h1><div class="sub">Apne customers ki visit date aur Done / Cancelled / Converted status update karein.</div></div><button class="btn" data-nav="calls">← My Calls</button></div><div id="myVisitSlot"></div></section>
+  <section id="page-calls" class="page center" hidden>
+    <div class="head"><div><h1 id="callsTitle">My Calls</h1><div class="sub">Overdue follow-ups first, then customers awaiting their first call</div></div><div><span id="connectionStatus" class="status">Ready</span> <button id="callsRefresh" class="btn">↻ Refresh</button></div></div>
+    <div id="callKpis" class="kpis"></div>
+    <div id="callMessage" class="notice" role="status" hidden></div>
+    <div id="bgSaveBox" class="notice warn" role="alert" hidden><span id="bgSaveText"></span><br><button id="bgSaveOpen" class="btn" type="button">Is customer ko dobara kholo</button> <button id="bgSaveClose" class="btn" type="button">Theek hai</button></div>
+    <div id="pendingCallBox" class="notice warn" hidden>Last save ka result confirm nahi hua. Same save ko verify/retry karein.<br><button id="retryCallBtn" class="btn" type="button">Retry last save</button></div>
+    <div id="callEmpty" class="panel empty" hidden></div>
+    <div id="leadCard" class="panel" hidden>
+      <span class="badge" id="cPriority"></span><div class="customer" id="cName"></div><div class="mobile" id="cMobile"></div>
+      <div class="meta"><div>City<strong id="cCity"></strong></div><div>Last response<strong id="cResponse"></strong></div><div>Source / Product<strong id="cSource"></strong></div><div>Assigned CRM<strong id="cCrm"></strong></div><div>Last call<strong id="cLastCall"></strong></div><div>Next follow-up (IST)<strong id="cFollowup"></strong></div></div>
+      <div id="previousNoteBox"><label>Existing note</label><div id="previousNote" class="small noteText"></div></div>
+      <div class="actions" style="margin-top:12px"><button id="callVisitBtn" class="btn" type="button">Manage visits</button><button id="callHistoryBtn" class="btn">View history</button><button id="callEditBtn" class="btn">Edit lead details</button></div>
+      <a id="dialLink" class="call" target="_self">📞 CALL NOW</a><div id="dialNotice" class="help" hidden>Phone dialer khulega. Call complete hone ke baad actual response save karein.</div>
+      <hr class="divider">
+      <div id="conflictBox" class="notice warn draftbox" hidden><strong>Latest details loaded. Your earlier response is preserved below.</strong><pre id="conflictDraft"></pre><button id="restoreCallDraft" class="btn" type="button">Use my earlier response after review</button></div>
+      <form id="callForm"><fieldset id="callFields"><h3>Customer Response</h3>
+        <div id="responseButtons" class="responses"><button type="button" class="resp" data-response="Interested">Interested</button><button type="button" class="resp" data-response="Call Later">Call Later</button><button type="button" class="resp" data-response="Not Picked">Not Picked</button><button type="button" class="resp" data-response="Catalogue Sent">Catalogue Sent</button><button type="button" class="resp" data-response="Visit Scheduled">Visit Scheduled</button><button type="button" class="resp" data-response="No Requirement">No Requirement</button></div>
+        <div id="callVisitDateBox" class="full" hidden><label for="callVisitDate">Customer visit date — kis din aayega? *</label><input id="callVisitDate" type="date" disabled><p class="help">Confirmed shop visit date. Next follow-up neeche alag bharein.</p></div><div class="formgrid"><div><label for="nextAction">Next action</label><select id="nextAction"><option>Call</option><option>WhatsApp</option><option>Catalogue Follow-up</option><option>Visit Reminder</option><option>Close Lead</option></select></div><div><label for="nextDate">Next follow-up — India time (IST)</label><input type="datetime-local" id="nextDate"></div><div class="full"><label for="callNote">Note for this call</label><textarea id="callNote" maxlength="3000" placeholder="Blank rakhne se existing note preserve rahega"></textarea></div></div>
+        <p class="help">Open leads ke liye future follow-up required hai. No Requirement select karne par lead close hogi.</p><button type="submit" id="saveCallBtn" class="primary wide">SAVE &amp; NEXT CUSTOMER</button>
+      </fieldset></form>
+    </div>
+  </section>
+  <section id="page-new" class="page center" hidden><div class="panel">
+    <div class="head"><div><h1>Add New Lead</h1><div class="sub">Customer details aur assigned CRM check karke save karein</div></div></div>
+    <div id="newMessage" class="notice" role="status" hidden></div>
+    <div id="pendingNewBox" class="notice warn" hidden>Previous lead save ka result confirm nahi hua.<br><button id="retryNewBtn" class="btn" type="button">Retry last lead save</button></div>
+    <form id="newForm"><fieldset id="newFields">
+    <label for="nMode">Entry type</label><select id="nMode"><option value="call">Call attempt ki — Lead + Call save karein</option><option value="pending">Call pending rakhein</option></select><p id="unknownDetailsHint" class="help" hidden>Not Picked: naam, city aur product pata nahi hain toh khaali chhod dein. Mobile, source, CRM aur future follow-up zaroori hain.</p>
+    <div class="formgrid" style="margin-top:14px">
+      <div><label for="nMobile">Mobile number *</label><input id="nMobile" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required placeholder="10 digit mobile"></div><div><label for="nName">Customer / firm name *</label><input id="nName" maxlength="200" required></div><div id="nCityBox"><label for="nCity">City *</label><input id="nCity" maxlength="150" required></div><div><label for="nSource">Source *</label><select id="nSource" required><option value="">Select source</option><option>WhatsApp</option><option>Meta Ad</option><option>Reference</option><option>Walk-in</option><option>Existing Customer</option><option>Other</option></select></div><div id="nProductBox"><label for="nProduct">Product / requirement *</label><input id="nProduct" maxlength="500" required></div><div><label for="nCrm">Assign CRM *</label><select id="nCrm" required></select></div><div class="full"><label for="nNote">Note (optional)</label><textarea id="nNote" maxlength="3000"></textarea></div>
+    </div>
+    <div id="newCallSection"><hr class="divider"><h3>First call response</h3><div class="formgrid">
+      <div><label for="nResponse">Customer response *</label><select id="nResponse"><option value="">Select response</option><option>Interested</option><option>Call Later</option><option>Not Picked</option><option>Catalogue Sent</option><option>Visit Scheduled</option><option>No Requirement</option></select></div>
+      <div id="newVisitDateBox" class="full" hidden><label for="newVisitDate">Customer visit date — kis din aayega? *</label><input id="newVisitDate" type="date" disabled><p class="help">Confirmed shop visit date. Next follow-up neeche alag bharein.</p></div><div><label for="nAction">Next action *</label><select id="nAction"><option>Call</option><option>WhatsApp</option><option>Catalogue Follow-up</option><option>Visit Reminder</option><option>Close Lead</option></select></div>
+      <div><label for="nFollowup">Next follow-up — India time (IST) *</label><input id="nFollowup" type="datetime-local"></div>
+    </div><p class="help">No Requirement se lead close hogi. Baaki responses ke liye future follow-up required hai. Upar ka optional Note call history mein bhi save hoga.</p></div>
+    <div id="dupNotice" class="notice warn" role="status" hidden></div><div id="duplicateActions" class="actions" hidden><button type="button" id="existingCallBtn" class="primary">Record call for existing customer</button><button type="button" id="existingEditBtn" class="btn">Edit existing customer</button></div>
+    <button class="primary wide" type="submit" id="saveNewBtn">SAVE LEAD &amp; CALL</button></fieldset></form>
+  </div></section>
+  <section id="page-edit" class="page center" hidden><div class="panel">
+    <div class="head"><div><h1>Edit Lead</h1><p id="editSubtitle" class="sub">Customer details correct karein. Call response badalne ke liye Record Call use karein.</p></div><button type="button" id="leaveEditBtn" class="btn">Back to Search</button></div>
+    <div id="editMessage" class="notice" role="status" hidden></div>
+    <div id="pendingEditBox" class="notice warn" hidden>Last edit ka result confirm nahi hua.<br><button type="button" class="btn" id="retryEditBtn">Retry same edit</button></div>
+    <div id="editConflictBox" class="notice warn" hidden><b>Latest customer details loaded. Review before restoring your earlier changes.</b><pre id="editConflictText" class="noteText"></pre><button type="button" id="restoreEditBtn" class="btn">Use my earlier changes after review</button> <button type="button" id="discardEditConflictBtn" class="btn">Keep latest details</button></div>
+    <form id="editForm"><fieldset id="editFields"><div class="formgrid">
+      <div><label for="eMobile">Mobile *</label><input id="eMobile" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required></div>
+      <div><label for="eName">Customer / firm name *</label><input id="eName" maxlength="200" required></div>
+      <div><label for="eCity">City *</label><input id="eCity" maxlength="150" required></div>
+      <div><label for="eSource">Source *</label><select id="eSource" required><option value="">Select source</option><option>WhatsApp</option><option>Meta Ad</option><option>Reference</option><option>Walk-in</option><option>Existing Customer</option><option>Other</option></select></div>
+      <div><label for="eProduct">Product / requirement *</label><input id="eProduct" maxlength="500" required></div>
+      <div><label for="eCrm">Assigned CRM *</label><select id="eCrm" required></select><p class="help">Existing lead reassign sirf Owner kar sakta hai.</p></div>
+      <div class="full"><label for="eNote">Note (optional)</label><textarea id="eNote" maxlength="3000"></textarea><p class="help">Yahan Note blank karke Save karne se lead ka current note clear hoga; purani call history rahegi.</p></div>
+    </div><div id="legacyEditCall" hidden><hr class="divider"><h3>Call response</h3><div class="formgrid">
+<div><label for="eResponse">Customer response *</label><select id="eResponse"><option value="">Select response</option><option>Interested</option><option>Call Later</option><option>Not Picked</option><option>Catalogue Sent</option><option>Visit Scheduled</option><option>No Requirement</option></select></div>
+<div><label for="eAction">Next action *</label><select id="eAction"><option>Call</option><option>WhatsApp</option><option>Catalogue Follow-up</option><option>Visit Reminder</option><option>Close Lead</option></select></div>
+<div><label for="eFollowup">Next follow-up — India time (IST) *</label><input id="eFollowup" type="datetime-local"></div>
+<div id="editVisitDateBox" hidden><label for="editVisitDate">Customer visit date *</label><input id="editVisitDate" type="date" disabled></div>
+</div><p class="help">Not Picked par naam, city aur product optional hain. Upar ka Note call history mein bhi save hoga.</p></div><button id="saveEditBtn" class="primary wide" type="submit">SAVE CHANGES</button></fieldset></form>
+  </div></section>
+  <section id="page-upload" class="page center" hidden><div class="panel">
+    <h1>Bulk Old Data Upload</h1><p class="sub">CSV only · Badi files automatic batches mein process hongi. Manual splitting ki zarurat nahi.</p>
+    <p class="help">Analyze karne par original rows archive mein save hoti hain. Legacy Review entries approval ke baad banti hain. Clear date formats: 03-Oct-2026 or 2026-10-03.</p>
+    <div class="actions"><button class="btn" type="button" id="downloadBulkTemplateBtn">Download Template (CSV)</button></div>
+    <div class="uploadbox"><label for="fileInput">Choose CSV file</label><input id="fileInput" type="file" accept=".csv,text/csv"><div id="fileName" class="help"></div></div>
+    <div id="uploadMessage" class="notice" role="status" hidden></div>
+    <div id="uploadPreview" hidden><h3>Upload preview</h3><div id="uploadStats" class="kpis"></div><div class="tablewrap"><table><thead><tr><th>Customer</th><th>Mobile</th><th>Source rows</th><th>Latest clear response</th><th>Date</th></tr></thead><tbody id="uploadRows"></tbody></table></div><p class="help">Preview first 10 customers ka hai. Full source rows LegacyImportRows tab mein preserve hoti hain, including invalid mobiles.</p><div class="actions"><button class="btn" id="cancelUploadBtn">Close preview</button><button class="primary" id="approveUploadBtn">APPROVE &amp; SEND TO REVIEW</button></div></div>
+    <button class="btn" data-nav="legacy" id="openLegacyBtn" hidden>Open Legacy Review</button>
+  </div></section>
+  <section id="page-legacy" class="page center" hidden><div class="head"><div><h1>Legacy Recovery Queue</h1><div id="legacyTotal" class="sub"></div></div><button class="btn" id="legacyRefresh">↻ Refresh</button></div><div id="legacyMessage" class="notice" role="status" hidden></div><div id="legacyCards"></div><div class="pager"><button class="btn" id="legacyPrev">← Previous</button><span id="legacyPageInfo" class="small"></span><button class="btn" id="legacyNext">Next →</button></div></section>
+  <section id="page-users" class="page center" hidden><div class="panel">
+    <div class="head"><div><h1>Manage Users</h1><div class="sub">CRM employee ka login banayein ya access remove karein.</div></div><button id="usersRefresh" class="btn" type="button">Refresh</button></div>
+    <div id="usersMessage" class="notice" role="status" hidden></div>
+    <form id="addUserForm"><fieldset id="userFields"><h3>Add CRM User</h3><div class="formgrid">
+    <div><label for="userName">Employee name *</label><input id="userName" maxlength="100" required autocomplete="off" placeholder="Full name"></div>
+    <div><label for="userLogin">Login ID *</label><input id="userLogin" minlength="3" maxlength="50" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,49}" required autocomplete="off" placeholder="e.g. neha.sharma"></div>
+    <div><label for="userPassword">Password *</label><input id="userPassword" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></div>
+    <div><label for="userPasswordConfirm">Confirm password *</label><input id="userPasswordConfirm" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></div>
+    </div><p class="help">Minimum 8 characters. Employee name se CRM assignment bhi banega. Password sirf login ke liye hai.</p><button type="submit" class="primary">ADD USER</button></fieldset></form>
+    <hr class="divider"><h3>Users &amp; Access</h3><p class="help">Remove Access se login band hoga. Purane customers aur call history safe rahenge. Pending customers ko Edit Lead se doosre CRM ko assign karein.</p>
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Login ID</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody id="usersRows"></tbody></table></div>
+  </div></section>
+  <section id="page-search" class="page center" hidden><div class="panel"><h1>Search Customer</h1><p class="sub">Customer name ya mobile number se search karein</p><label for="globalSearch" class="sr">Customer search</label><input id="globalSearch" maxlength="200" placeholder="Name or mobile..."><div id="searchInfo" class="help" role="status"></div><div id="searchResults"></div></div></section>
+  <div id="overlay" class="overlay" hidden></div><aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden><div class="head"><h2 id="drawerTitle">Customer details</h2><button id="drawerClose" class="btn" aria-label="Close customer details">✕</button></div><div id="drawerContent"></div></aside>
+</div>
+<!-- QRCode.js v1.0.0 https://github.com/davidshimjs/qrcodejs
+The MIT License (MIT)
+---------------------
+Copyright (c) 2012 davidshimjs
+
+Permission is hereby granted, free of charge,
+to any person obtaining a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+<script>
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<!-- Smart CRM: single-click phone QR. Browser-only; no Sheet writes. -->
+<style>
+button.crmPhoneQR{appearance:none;background:transparent;border:0;border-radius:0;padding:0;margin:0;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;text-align:inherit;cursor:pointer;vertical-align:baseline;min-width:0;min-height:0}
+button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}
+#crmPhoneQrDialog{border:1px solid #dce3ed;border-radius:16px;background:#fff;color:#17253b;padding:24px;width:min(380px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-shadow:0 18px 70px #0005;text-align:center}
+#crmPhoneQrDialog::backdrop{background:rgba(10,20,35,.6)}
+#crmPhoneQrDialog h2{font-size:20px;margin:0 0 8px}#crmPhoneQrDialog p{margin:8px 0;overflow-wrap:anywhere}#crmPhoneQrNumber{font-size:22px;font-weight:700}
+#crmPhoneQrCanvas{display:block;background:#fff;padding:0;margin:12px auto;line-height:0;width:264px;max-width:100%}#crmPhoneQrCanvas svg{display:block;width:100%;height:auto;background:#fff;shape-rendering:crispEdges}#crmPhoneQrModes{display:flex;justify-content:center;gap:8px;margin:10px 0}#crmPhoneQrModes button{font:inherit;font-size:13px;padding:8px 12px;border:1px solid #ccd5e3;border-radius:8px;background:#fff;color:#17253b;cursor:pointer}#crmPhoneQrModes button[aria-pressed="true"]{background:#245be8;color:#fff;border-color:#245be8}#crmPhoneQrHelp{font-size:13px;color:#52627a}
+#crmPhoneQrClose{background:#245be8;color:white;border:0;border-radius:8px;padding:10px 24px;font:inherit;cursor:pointer;margin-top:12px}
+</style>
+<dialog id="crmPhoneQrDialog" aria-labelledby="crmPhoneQrTitle" aria-describedby="crmPhoneQrHelp">
+<h2 id="crmPhoneQrTitle">Scan to dial</h2><p id="crmPhoneQrName"></p><p id="crmPhoneQrNumber"></p>
+<div id="crmPhoneQrModes" role="group" aria-label="QR format"><button type="button" id="crmPhoneQrDial" aria-pressed="true">Dial QR</button><button type="button" id="crmPhoneQrPlain" aria-pressed="false">Number only (Lens)</button></div>
+<div id="crmPhoneQrCanvas" role="img" aria-label="Phone number QR code"></div>
+<p id="crmPhoneQrHelp">Phone Camera / Google Lens se scan karein. Call option par tap karke dialer kholein; call button phone par dabayein.</p>
+<p id="crmPhoneQrError" role="alert" hidden></p><button type="button" id="crmPhoneQrClose">Close</button>
+</dialog>
+<script>
+(function(){
+  'use strict';
+  const escapeText=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function normalizePhone(value){
+    const raw=String(value==null?'':value).trim();if(!/^[+\d\s().-]+$/.test(raw))return '';
+    let digits=raw.replace(/\D/g,'');
+    if(/^0\d{10}$/.test(digits))digits=digits.slice(1);
+    if(/^\d{10}$/.test(digits))return '+91'+digits;
+    if(/^91\d{10}$/.test(digits))return '+'+digits;
+    if(raw.startsWith('+')&&/^[1-9]\d{7,14}$/.test(digits))return '+'+digits;
+    return '';
+  }
+  window.crmPhoneQrMarkup=function(mobile,name){
+    const number=normalizePhone(mobile);if(!number)return escapeText(mobile||'—');
+    return '<button type="button" class="crmPhoneQR" data-crm-phone-qr="'+escapeText(number)+'" data-crm-phone-name="'+escapeText(name||'')+'" aria-label="Show phone QR for '+escapeText(mobile)+'" title="Click to show QR">'+escapeText(mobile)+'</button>';
+  };
+  const dialog=document.getElementById('crmPhoneQrDialog'),box=document.getElementById('crmPhoneQrCanvas'),close=document.getElementById('crmPhoneQrClose');let previousFocus=null,currentPhone='',qrMode='dial';
+  // Render the pinned QRCode.js matrix as SVG, with an embedded 4-module
+  // quiet zone. This avoids canvas/image conversion and blurred module edges.
+  function renderPhoneQr(){
+    box.replaceChildren();box.setAttribute('aria-label','QR for '+currentPhone);
+    const error=document.getElementById('crmPhoneQrError');error.hidden=true;
+    document.getElementById('crmPhoneQrDial').setAttribute('aria-pressed',String(qrMode==='dial'));
+    document.getElementById('crmPhoneQrPlain').setAttribute('aria-pressed',String(qrMode==='plain'));
+    document.getElementById('crmPhoneQrHelp').textContent=qrMode==='plain'
+      ?'Google Lens se QR scan karein. Is QR mein sirf upar wala number hai. Number / Call option dikhe to tap karein.'
+      :'QR scan karein, phir Call option par tap karein. Lens mein number na dikhe to Number only (Lens) select karke dobara scan karein.';
+    try{
+      const payload=qrMode==='plain'?currentPhone:'tel:'+currentPhone;
+      const scratch=document.createElement('div');
+      const code=new QRCode(scratch,{text:payload,width:264,height:264,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+      const matrix=code._oQRCode,n=matrix.getModuleCount(),size=n+8,ns='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(ns,'svg');
+      svg.setAttribute('viewBox','0 0 '+size+' '+size);svg.setAttribute('width',size*8);svg.setAttribute('height',size*8);
+      svg.setAttribute('shape-rendering','crispEdges');svg.setAttribute('aria-hidden','true');
+      const bg=document.createElementNS(ns,'rect');bg.setAttribute('width',size);bg.setAttribute('height',size);bg.setAttribute('fill','#ffffff');svg.appendChild(bg);
+      const path=document.createElementNS(ns,'path');let d='';
+      for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(matrix.isDark(y,x))d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';
+      path.setAttribute('d',d);path.setAttribute('fill','#000000');svg.appendChild(path);box.appendChild(svg);
+      box.style.width=(size*8)+'px';scratch.replaceChildren();
+    }catch(e){box.replaceChildren();error.textContent='QR generate nahi hua. Page refresh karke dobara try karein.';error.hidden=false;}
+  }
+  function openPhoneQr(button){
+    const phone=normalizePhone(button.dataset.crmPhoneQr);if(!phone)return;
+    currentPhone=phone;qrMode='dial';previousFocus=button;
+    document.getElementById('crmPhoneQrName').textContent=button.dataset.crmPhoneName||'';
+    document.getElementById('crmPhoneQrNumber').textContent=phone;
+    if(!dialog.open)dialog.showModal();renderPhoneQr();close.focus();
+  }
+  document.getElementById('crmPhoneQrDial').addEventListener('click',()=>{qrMode='dial';renderPhoneQr();});
+  document.getElementById('crmPhoneQrPlain').addEventListener('click',()=>{qrMode='plain';renderPhoneQr();});
+  document.addEventListener('click',function(event){
+    const button=event.target.closest&&event.target.closest('[data-crm-phone-qr]');if(!button)return;
+    event.preventDefault();event.stopPropagation();openPhoneQr(button);
+  },true);
+  close.addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();});
+  document.addEventListener('keydown',event=>{if(dialog.open&&event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();dialog.close();}},true);
+  dialog.addEventListener('close',()=>{box.replaceChildren();currentPhone='';if(previousFocus&&previousFocus.isConnected)previousFocus.focus();previousFocus=null;});
+})();
+</script>
+
+<script>
+'use strict';
+const LOGO_B64 = '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';
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const store = {get(key){try{return sessionStorage.getItem(key)}catch{return null}},set(key,value){try{sessionStorage.setItem(key,value)}catch{}},remove(key){try{sessionStorage.removeItem(key)}catch{}}};
+  const uid = () => globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+  const readJSON = key => {try{return JSON.parse(store.get(key)||'null')}catch{return null}};
+  const S = {token:store.get('crm_token')||'',session:null,page:'',team:[],epoch:0,seq:{},write:false,lead:null,response:'',callAttempt:null,newAttempt:null,conflict:null,batch:null,uploadBusy:false,legacyOffset:0,legacyTotal:0,newReady:false,drawerLead:null,ownerTimer:null,searchTimer:null,dupTimer:null,duplicate:null,teamPromise:null,teamAt:0,apiVersion:0,queueLoading:false,editLead:null,editAttempt:null,editConflict:null,queueBucket:'fresh',queueOffset:0,queueHasMore:false,detailsLoading:false,reportOffset:0,reportHasMore:false,reportLoading:false,reportApplied:null,queue:[],doneIds:new Set(),bgSaving:false,bgProblem:null};
+  const pageSize=20;
+  const nextSeq = key => S.seq[key]=(S.seq[key]||0)+1;
+  const current = (key,seq,epoch) => S.seq[key]===seq && S.epoch===epoch && !!S.session;
+  const draftKey = kind => 'smartcrm_v3_'+S.session.username+'_'+kind;
+  const saveJSON = (kind,value) => {if(S.session)store.set(draftKey(kind),JSON.stringify(value))};
+  const removeDraft = kind => {if(S.session)store.remove(draftKey(kind))};
+  function notice(id,text,kind='info'){const box=$(id);box.textContent=text||'';box.className='notice '+kind+(id==='globalNotice'?' page-error':'');box.hidden=!text;}
+  function messageOf(e){return e && e.message ? e.message : String(e||'Something went wrong.');}
+  function setStatus(text){$('connectionStatus').textContent=text;}
+  function expire(){$('addUserForm').reset();persistCallDraft();persistNewDraft();persistEditDraft();S.epoch++;S.write=false;S.bgSaving=false;readCache.clear();S.session=null;S.token='';store.remove('crm_token');$('appShell').hidden=true;$('loginScreen').hidden=false;$('loginPass').value='';$('loginBtn').disabled=false;notice('loginNotice','Session expired. Login again; your form draft is preserved.','warn');setStatus('Session expired');}
+  function report(id,error){const text=messageOf(error);if(text.includes('SESSION_EXPIRED')){if(S.session)expire();return}notice(id,text,'err');setStatus('Check message');}
+  function rpcRaw(name,args=[],publicCall=false){const token=S.token;const epoch=S.epoch;return new Promise((resolve,reject)=>{let settled=false;const timer=setTimeout(()=>{if(settled)return;settled=true;reject(new Error('Response is taking longer than expected. Save result may be unknown. Use Retry for a pending save.'));},45000);const finish=(error,result)=>{if(settled)return;settled=true;clearTimeout(timer);if(error){if(messageOf(error).includes('SESSION_EXPIRED')&&epoch===S.epoch&&!publicCall)expire();reject(error);}else {resolve(result);}};const isWrite=!publicCall&&WRITE_RPC.test(name);if(isWrite){writesInFlight++;writeGen++;}const done=finish;const finishAll=(error,result)=>{if(isWrite){writesInFlight=Math.max(0,writesInFlight-1);writeGen++;pendingReads.clear();readCache.clear();schedulePrefetch();}done(error,result);};/* Cloudflare API: POST /api/<name> {token,args} -> {ok,result|error} */fetch('/api/'+encodeURIComponent(name),{method:'POST',headers:{'content-type':'application/json'},cache:'no-store',body:JSON.stringify(publicCall?{args:args}:{token:token,args:args})}).then(r=>r.json().catch(()=>({ok:false,error:'Server se galat jawab aaya ('+r.status+'). Dobara try karein.'}))).then(d=>{if(d&&d.ok)finishAll(null,d.result);else finishAll(new Error((d&&d.error)||'Server error. Dobara try karein.'));}).catch(()=>finishAll(new Error('Internet ya server se sampark nahi hua. Save ka result pata nahi — Retry dabayein.')));});}
+  const pendingReads=new Map();
+  // Speed: screens are remembered in the browser for 30 seconds, so switching tabs
+  // is instant. Background refresh every 25 seconds keeps them current. Any save
+  // clears this memory, and "Refresh" buttons always fetch fresh data.
+  const WRITE_RPC=/^(save|create|update|resolve|approve|adminCreate|adminRemove)/;
+  const readCache=new Map(),READ_FRESH_MS=50000;let writesInFlight=0,writeGen=0,forceFresh=false;
+  function fresh(fn){forceFresh=true;try{return fn();}finally{forceFresh=false;}}
+  const copyOf=v=>v==null?v:JSON.parse(JSON.stringify(v));
+  function rpc(name,args=[],publicCall=false){
+    const readOnly=['getCrmScreenData','getVisitDashboard','getOwnerCallReport','getMyCallsData','getMyQueueSummary','getCustomerProfile','getOwnerDashboard','getLegacyPage','getBootstrapData','adminListUsers','getMyQueueDetails'];
+    if(publicCall||!readOnly.includes(name))return rpcRaw(name,args,publicCall);
+    const key=JSON.stringify([S.epoch,name,args]);
+    if(!forceFresh){const hit=readCache.get(key);if(hit&&Date.now()-hit.at<READ_FRESH_MS)return Promise.resolve(copyOf(hit.value));}
+    if(pendingReads.has(key))return pendingReads.get(key).then(copyOf);
+    const gen=writeGen;
+    const promise=rpcRaw(name,args).then(value=>{if(gen===writeGen&&!writesInFlight&&value&&!value.loadError)readCache.set(key,{at:Date.now(),value:copyOf(value)});return value;}).finally(()=>{if(pendingReads.get(key)===promise)pendingReads.delete(key);});pendingReads.set(key,promise);return promise.then(copyOf);
+  }
+  // After a save, refill the screen memory shortly so the next tab switch is instant too.
+  let prefetchTimer=null;
+  function schedulePrefetch(){clearTimeout(prefetchTimer);prefetchTimer=setTimeout(()=>{if(!writesInFlight)prefetchScreens();else schedulePrefetch();},1500);}
+  // Quietly fetch the main screens in the background so tabs open instantly.
+  function prefetchScreens(){
+    if(!S.session||S.write||document.hidden)return;
+    const today=toISTInput(new Date().toISOString()).slice(0,10),jobs=[];
+    if(S.session.teamMemberName)jobs.push(['getMyCallsData',[]]);
+    if(S.session.role==='Owner')jobs.push(['getCrmScreenData',['owner',$('reportFrom').value||today,$('reportTo').value||today]]);
+    else jobs.push(['getVisitDashboard',[$('visitFrom').value||today,$('visitTo').value||today]]);
+    jobs.push(['getLegacyPage',[S.legacyOffset,pageSize]]);
+    const epoch=S.epoch;
+    jobs.forEach(([name,args],i)=>setTimeout(()=>{
+      if(epoch!==S.epoch||!S.session||S.write)return;
+      fresh(()=>rpc(name,args)).then(r=>{
+        if(name==='getMyCallsData'&&r&&epoch===S.epoch){S.queue=r.queue||(r.lead?[r.lead]:[]);if(S.page==='calls'&&r.summary)renderSummary(r.summary);}
+      }).catch(()=>{});
+    },i*500));
+  }
+  const istInputFormatter=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+  function toISTInput(value){if(!value)return '';const date=new Date(value);if(isNaN(date))return '';const parts=istInputFormatter.formatToParts(date);const p={};parts.forEach(v=>p[v.type]=v.value);return p.year+'-'+p.month+'-'+p.day+'T'+p.hour+':'+p.minute;}
+  function fromISTInput(value){if(!value)return '';if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value))throw new Error('Choose a valid follow-up date and time.');const date=new Date(value+':00+05:30');if(isNaN(date)||toISTInput(date.toISOString())!==value)throw new Error('Choose a valid follow-up date and time.');return date.toISOString();}
+  function kpi(icon,label,value){return '<div class="kpi"><div class="icon" aria-hidden="true">'+icon+'</div><strong>'+esc(value==null?0:value)+'</strong><span>'+esc(label)+'</span></div>';}
+  function busy(on){S.write=on;document.querySelectorAll('.nav button').forEach(b=>b.disabled=on);$('callsRefresh').disabled=on;$('ownerRefresh').disabled=on;$('legacyRefresh').disabled=on;$('fileInput').disabled=on;updateLocks();}
+  function updateLocks(){
+    $('callFields').disabled=S.write||(!!S.callAttempt&&!S.bgSaving)||S.queueLoading;
+    $('newFields').disabled=S.write||!!S.newAttempt||!S.newReady;
+    $('editFields').disabled=S.write||!!S.editAttempt||!S.editLead||!S.newReady;
+    $('retryCallBtn').disabled=S.write;$('retryNewBtn').disabled=S.write;$('retryEditBtn').disabled=S.write;
+    $('pendingCallBox').hidden=!S.callAttempt||S.bgSaving;$('saveCallBtn').disabled=S.bgSaving;$('saveCallBtn').textContent=S.bgSaving?'Pichla save ho raha hai…':(S.write&&S.callAttempt?'Saving…':'SAVE & NEXT CUSTOMER');$('pendingNewBox').hidden=!S.newAttempt;$('pendingEditBox').hidden=!S.editAttempt;
+    $('approveUploadBtn').disabled=S.write||S.uploadBusy||!S.batch;$('cancelUploadBtn').disabled=S.write;
+    $('callEditBtn').disabled=S.write||(!!S.callAttempt&&!S.bgSaving)||S.queueLoading;$('leaveEditBtn').disabled=S.write;
+    $('eCrm').disabled=!$('legacyEditCall').hidden||(!!S.session&&S.session.role!=='Owner');
+    $('editNav').hidden=!(S.editLead||S.editAttempt||(S.session&&readJSON(draftKey('editDraft'))));
+    $('saveNewBtn').disabled=!!S.duplicate;
+  }
+  function toggleCallVisitDate(id,show){$(id+'Box').hidden=!show;$(id).disabled=!show;$(id).required=show;$(id).min=toISTInput(new Date().toISOString()).slice(0,10);}
+  function checkedVisitDate(response,id){
+    if(response!=='Visit Scheduled')return '';
+    const d=$(id).value,today=toISTInput(new Date().toISOString()).slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||isNaN(Date.parse(d+'T00:00:00Z'))||new Date(d+'T00:00:00Z').toISOString().slice(0,10)!==d)throw Error('Visit date select karein — customer kis din aayega?');
+    if(d<today)throw Error('Visit date aaj ki ya aage ki honi chahiye.');return d;
+  }
+  function selectResponse(value){S.response=value;toggleCallVisitDate('callVisitDate',value==='Visit Scheduled');document.querySelectorAll('[data-response]').forEach(b=>{const selected=b.dataset.response===value;b.classList.toggle('sel',selected);b.setAttribute('aria-pressed',String(selected))});const closed=value==='No Requirement';$('nextDate').disabled=closed;$('nextDate').required=!closed;if(closed){$('nextAction').value='Close Lead';}else if($('nextAction').value==='Close Lead'){$('nextAction').value='Call';}persistCallDraft();}
+  function callDraft(){if(!S.lead)return null;return {leadId:S.lead.id,rowVersion:S.lead.rowVersion,response:S.response,nextActionType:$('nextAction').value,nextDate:$('nextDate').value,visitDate:$('callVisitDate').value,note:$('callNote').value};}
+  function persistCallDraft(){if(S.session&&S.lead){const draft=S.conflict&&S.conflict.leadId===S.lead.id?S.conflict:callDraft();saveJSON('callDraft',draft);saveJSON('callDraft_'+S.lead.id,draft);}}
+  function newDraft(){return {mobile:$('nMobile').value,name:$('nName').value,city:$('nCity').value,source:$('nSource').value,product:$('nProduct').value,crm:$('nCrm').value,note:$('nNote').value,mode:$('nMode').value,response:$('nResponse').value,action:$('nAction').value,followup:$('nFollowup').value,visitDate:$('newVisitDate').value};}
+  function persistNewDraft(){if(S.session&&S.newReady)saveJSON('newDraft',newDraft());}
+  function fillNewDraft(d){if(!d)return;const fields={mobile:'nMobile',name:'nName',city:'nCity',source:'nSource',product:'nProduct',crm:'nCrm',note:'nNote',mode:'nMode',response:'nResponse',action:'nAction',followup:'nFollowup',visitDate:'newVisitDate'};Object.keys(fields).forEach(key=>{if(d[key]!=null)$(fields[key]).value=d[key]});updateNewMode();}
+  function showConflictDraft(d){S.conflict=d;$('conflictBox').hidden=!d;if(d)saveJSON('callDraft_'+d.leadId,d);if(d)$('conflictDraft').textContent='Response: '+(d.response||'—')+'\nNext action: '+(d.nextActionType||'—')+'\nFollow-up (IST): '+(d.nextDate||'—').replace('T',' ')+'\nVisit date: '+(d.visitDate||'—')+'\nNote: '+(d.note||'—');}
+  function applyCallDraft(d){if(!d)return;$('nextAction').value=d.nextActionType||'Call';$('nextDate').value=d.nextDate||'';$('callNote').value=d.note||'';$('callVisitDate').value=d.visitDate||'';selectResponse(d.response||'');}
+  function renderLead(lead,{restore=true}={}){S.lead=lead;S.response='';$('leadCard').hidden=!lead;$('callEmpty').hidden=!!lead;showConflictDraft(null);if(!lead){$('callEmpty').textContent=S.session&&S.session.role==='Owner'&&!S.session.teamMemberName?'Owner Dashboard or Search se customer kholkar call record karein.':'Abhi koi call due nahi hai. Future follow-ups apne scheduled time par queue mein aayenge. Unscheduled customers ko Search se khol sakte hain.';updateLocks();return}const values={cName:lead.name||'Name not available',cMobile:lead.mobile,cCity:lead.city||'—',cResponse:lead.disposition||'—',cSource:[lead.source,lead.product].filter(Boolean).join(' · ')||'—',cCrm:lead.crm||'—',cLastCall:lead.lastCallDisplay||'—',cFollowup:lead.nextFollowupDisplay||'—',previousNote:lead.note||'No existing note.'};Object.keys(values).forEach(id=>$(id).textContent=values[id]);$('cMobile').innerHTML=crmPhoneQrMarkup(lead.mobile,lead.name);$('cPriority').textContent='Priority '+lead.score+'/10';const phone=String(lead.mobile||'').replace(/\D/g,'');if(/^\d{10}$/.test(phone)){$('dialLink').href='tel:+91'+phone;$('dialLink').hidden=false;}else{$('dialLink').removeAttribute('href');$('dialLink').hidden=true;}$('dialNotice').hidden=true;const draft=restore?(readJSON(draftKey('callDraft_'+lead.id))||readJSON(draftKey('callDraft'))):null;$('nextAction').value=lead.nextActionType||'Call';$('nextDate').value=toISTInput(lead.nextFollowupAt);$('callNote').value='';$('callVisitDate').value='';selectResponse('');if(draft&&draft.leadId===lead.id){if(Number(draft.rowVersion)===Number(lead.rowVersion))applyCallDraft(draft);else showConflictDraft(draft);}updateLocks();}
+  function renderSummary(data){$('callKpis').innerHTML=[['☎','Customers called today','done'],['🆕','First call pending','fresh'],['🕒','Later today','due'],['⚠','Overdue / due now','overdue'],['📅','After today','upcoming'],['📝','Follow-up missing','unscheduled']].map(([icon,label,bucket])=>'<button type="button" class="kpi queueKpi" data-queue-bucket="'+bucket+'" aria-label="'+esc(label)+': '+esc(data[bucket]||0)+' — view customers"><div class="icon" aria-hidden="true">'+icon+'</div><strong>'+esc(data[bucket]||0)+'</strong><span>'+esc(label)+'</span><small>View customers →</small></button>').join('');}
+  async function openQueueDetails(bucket,offset=0){
+    if(S.write||!S.session)return;
+    const labels={done:'Customers called today',fresh:'First call pending',due:'Later today',overdue:'Overdue / due now',upcoming:'After today',unscheduled:'Follow-up missing'};
+    if(!Object.prototype.hasOwnProperty.call(labels,bucket))return;
+    navigate('queueDetails');S.queueBucket=bucket;S.queueOffset=offset;S.detailsLoading=true;
+    const n=nextSeq('details'),epoch=S.epoch;
+    $('queueTitle').textContent=labels[bucket];$('queueInfo').textContent='Loading customers…';$('queueList').innerHTML='';$('queuePageInfo').textContent='';notice('queueMessage','');$('queuePrev').disabled=true;$('queueNext').disabled=true;$('queueRefresh').disabled=true;
+    try{
+      const d=await rpc('getMyQueueDetails',[bucket,offset,25]);
+      if(!current('details',n,epoch)||S.page!=='queueDetails')return;
+      if(!d||!Array.isArray(d.items))throw Error('Customer list could not load. Refresh and retry.');
+      S.queueOffset=d.offset;S.queueHasMore=d.hasMore;
+      $('queueInfo').textContent=d.total+' customers · Updated '+(d.asOfDisplay||'now')+' (IST)';
+      $('queueList').innerHTML=d.items.length?'<div class="tablewrap"><table><thead><tr><th>Customer / details</th><th>Mobile</th><th>City / product</th><th>Response</th><th>Last call</th><th>Next follow-up</th></tr></thead><tbody>'+d.items.map(c=>'<tr><td>'+(c.canAccess?'<button type="button" class="linkbutton" data-profile="'+esc(c.id)+'">'+esc(c.name||'View customer')+'</button><div class="small">Open full details & history</div>':esc(c.name||'Name not available')+'<div class="small">'+esc(c.accessMessage)+'</div>')+'</td><td>'+crmPhoneQrMarkup(c.mobile,c.name)+'</td><td>'+esc(c.city||'—')+'<div class="small">'+esc(c.product||'')+'</div></td><td>'+esc(c.disposition||'—')+'</td><td>'+esc(c.lastCallDisplay||'—')+'</td><td>'+esc(c.nextFollowupDisplay||'—')+'</td></tr>').join('')+'</tbody></table></div>':'<div class="panel empty">No customers in this category right now.</div>';
+      $('queuePageInfo').textContent=d.total?(d.offset+1)+'–'+(d.offset+d.items.length)+' of '+d.total:'0 customers';
+      $('queuePrev').disabled=d.offset===0;$('queueNext').disabled=!d.hasMore;
+      if(d.restrictedCount)notice('queueMessage','Some customers in today’s count were reassigned or are unavailable. Their private details are hidden.','info');
+    }catch(e){if(current('details',n,epoch)&&S.page==='queueDetails'){$('queueInfo').textContent='List not loaded';report('queueMessage',e);}}
+    finally{if(current('details',n,epoch)){S.detailsLoading=false;$('queueRefresh').disabled=false;}}
+  }
+
+  async function loadSummary(){const n=nextSeq('summary'),epoch=S.epoch;try{const data=await rpc('getMyQueueSummary');if(current('summary',n,epoch))renderSummary(data);}catch(e){if(current('summary',n,epoch))report('callMessage',e)}}
+  async function loadCalls(explicitLead){
+
+    const n=nextSeq('calls'),epoch=S.epoch,start=Date.now();S.queueLoading=true;updateLocks();setStatus('Loading');
+    try{
+      if(S.callAttempt&&!S.bgSaving){const profile=await fresh(()=>rpc('getCustomerProfile',[S.callAttempt.payload.leadId]));if(!current('calls',n,epoch))return;renderLead(profile.lead);notice('callMessage','Previous save ko Retry last save se verify karein.','warn');setStatus('Pending save');return;}
+      if(explicitLead){renderLead(explicitLead);setStatus('Selected customer');loadSummary();return;}
+      const data=await rpc('getMyCallsData');if(!current('calls',n,epoch))return;
+      if(!data||!data.summary)throw new Error('Queue response missing. Refresh and retry.');
+      S.queue=data.queue||(data.lead?[data.lead]:[]);const first=S.bgSaving?S.queue.find(l=>!S.doneIds.has(l.id))||null:data.lead;renderSummary(data.summary);renderLead(first);setStatus('Loaded · '+((Date.now()-start)/1000).toFixed(1)+'s');
+    }catch(e){if(current('calls',n,epoch))report('callMessage',e);}
+    finally{if(n===S.seq.calls&&epoch===S.epoch){S.queueLoading=false;updateLocks();}}
+  }
+  function validationFailure(error){return /^(Visit date|Multiple pending visits found|Enter the next follow-up date and time\.|Next follow-up must be a future date and time\.|Select a valid next action for this open lead\.|Select a valid customer response\.|Enter a valid 10 digit mobile number\.|Customer name is required\.|City is required\.|Source is required\.|Product \/ requirement is required\.|Select an active CRM team member\.|Only the owner can reassign an existing lead\.|To record the first call, assign this lead to your own CRM name\.|Call date cannot be in the future\.|Invalid date:|Missing row version\.)/.test(messageOf(error));}
+  function clearCallAttempt(){S.callAttempt=null;removeDraft('callAttempt');updateLocks();}
+  async function sendCallAttempt(){if(S.write||!S.callAttempt)return;const attempt=S.callAttempt;const epoch=S.epoch;busy(true);notice('callMessage','Saving…','info');$('saveCallBtn').textContent='Saving…';try{const result=await rpc('saveCallOutcome',[attempt.payload,attempt.id]);if(epoch!==S.epoch)return;if(!result)throw new Error('Empty save response. Use Retry to verify.');if(result.conflict){clearCallAttempt();const preserved=attempt.draft;renderLead(result.latest,{restore:false});showConflictDraft(preserved);notice('callMessage','Customer details changed. Latest details are shown. Review them before choosing your response again.','warn');return}if(!result.success)throw new Error(result.message||'Save was not confirmed. Retry the same save.');clearCallAttempt();removeDraft('callDraft');removeDraft('callDraft_'+attempt.payload.leadId);S.lead=null;notice('callMessage','Saved successfully. Loading next customer…','ok');await loadCalls();}catch(e){if(epoch===S.epoch){if(validationFailure(e))clearCallAttempt();report('callMessage',e);}}finally{if(epoch===S.epoch){busy(false);$('saveCallBtn').textContent='SAVE & NEXT CUSTOMER';}}}
+  async function saveCall(event){event.preventDefault();if(S.write)return;if(S.bgSaving){notice('callMessage','Pichla save abhi chal raha hai. 2-3 second mein Save dabayein.','warn');return}if(S.callAttempt){sendCallAttempt();return}if(!S.lead)return;try{if(!S.response)throw new Error('Select customer response first.');const closed=S.response==='No Requirement';const followup=closed?'':fromISTInput($('nextDate').value);if(!closed&&(!followup||new Date(followup)<=new Date()))throw new Error('Choose a future follow-up date and time (IST).');if(!closed&&$('nextAction').value==='Close Lead')throw new Error('Choose an open next action, or select No Requirement.');const draft=callDraft();S.callAttempt={id:uid(),draft:draft,payload:{leadId:S.lead.id,knownRowVersion:S.lead.rowVersion,response:S.response,nextActionType:closed?'Close Lead':$('nextAction').value,nextFollowupAt:followup,visitDate:checkedVisitDate(S.response,'callVisitDate'),note:$('callNote').value.trim()}};S.callAttempt.leadName=S.lead.name||S.lead.mobile||'Customer';saveJSON('callAttempt',S.callAttempt);startBackgroundSave();}catch(e){report('callMessage',e)}}
+  // Save & Next: the next customer appears immediately; the save finishes in the background.
+  // If the save fails, a clear message names the customer and reopens it with the same entry.
+  function nextQueuedLead(){return S.queue.find(l=>l&&!S.doneIds.has(l.id)&&(!S.lead||l.id!==S.lead.id))||null;}
+  function hideBgProblem(){S.bgProblem=null;$('bgSaveBox').hidden=true;}
+  function showBgProblem(attempt,kind,text,latest){
+    S.bgProblem={leadId:attempt.payload.leadId,draft:attempt.draft,kind:kind,latest:latest||null};
+    $('bgSaveText').textContent=text;$('bgSaveOpen').hidden=kind==='unknown';$('bgSaveBox').hidden=false;
+    if(S.page!=='calls')notice('globalNotice',text+' My Calls mein jaakar dekhein.','warn');
+  }
+  function startBackgroundSave(){
+    const attempt=S.callAttempt,epoch=S.epoch,leadId=attempt.payload.leadId,name=attempt.leadName;
+    S.bgSaving=true;S.doneIds.add(leadId);hideBgProblem();removeDraft('callDraft');
+    const next=nextQueuedLead();
+    if(next){renderLead(next);setStatus('Agla customer');}
+    else{S.lead=null;showConflictDraft(null);$('leadCard').hidden=true;$('callEmpty').hidden=false;$('callEmpty').textContent='Save ho raha hai… agla customer abhi aa raha hai.';}
+    notice('callMessage','"'+name+'" ka save ho raha hai… aap agla customer dekh sakte hain.','info');updateLocks();
+    (async()=>{
+      try{
+        const result=await rpc('saveCallOutcome',[attempt.payload,attempt.id]);if(epoch!==S.epoch)return;
+        if(!result)throw new Error('Empty save response. Use Retry to verify.');
+        S.bgSaving=false;
+        if(result.conflict){clearCallAttempt();S.doneIds.delete(leadId);showBgProblem(attempt,'conflict','"'+name+'" ka save NAHI hua — kisi aur ne is customer ki details badal di thi. Aapki entry sambhal ke rakhi hai.',result.latest);notice('callMessage','','info');refreshAfterBackgroundSave(epoch);return;}
+        if(!result.success)throw new Error(result.message||'Save was not confirmed. Retry the same save.');
+        clearCallAttempt();removeDraft('callDraft_'+leadId);
+        notice('callMessage','"'+name+'" — save ho gaya ✓','ok');refreshAfterBackgroundSave(epoch);
+      }catch(e){
+        if(epoch!==S.epoch)return;S.bgSaving=false;
+        if(validationFailure(e)){clearCallAttempt();S.doneIds.delete(leadId);showBgProblem(attempt,'error','"'+name+'" ka save NAHI hua: '+messageOf(e)+' Customer kholkar entry theek karein.');notice('callMessage','','info');refreshAfterBackgroundSave(epoch);return;}
+        // Result unknown (network etc.): keep the entry and show the same customer with Retry.
+        updateLocks();showBgProblem(attempt,'unknown','"'+name+'" ka save confirm nahi hua. Neeche "Retry last save" dabayein — dobara entry nahi banegi.');
+        if(S.page==='calls'){S.lead=null;await loadCalls();}
+      }
+    })();
+  }
+  async function refreshAfterBackgroundSave(epoch){
+    try{
+      const data=await fresh(()=>rpc('getMyCallsData'));if(epoch!==S.epoch||!data)return;
+      S.queue=data.queue||(data.lead?[data.lead]:[]);S.doneIds.clear();
+      if(S.page==='calls'&&data.summary)renderSummary(data.summary);
+      if(S.page==='calls'&&!S.lead&&!S.callAttempt){renderLead(S.queue[0]||null);setStatus('Loaded');}
+    }catch(e){if(epoch===S.epoch&&S.page==='calls'&&!S.lead)loadCalls();}
+    finally{if(epoch===S.epoch)updateLocks();}
+  }
+  async function loadTeam(force=false){
+    if(S.newReady&&!force&&Date.now()-S.teamAt<60000)return;
+    if(S.teamPromise)return S.teamPromise;
+    const epoch=S.epoch;S.newReady=false;updateLocks();
+    const task=(async()=>{try{const boot=await rpc('getBootstrapData');if(epoch!==S.epoch||!S.session)return;applyBootstrap(boot);}catch(e){if(epoch===S.epoch){report('newMessage',e);report('editMessage',e);}}})();
+    S.teamPromise=task;try{await task;}finally{if(S.teamPromise===task)S.teamPromise=null;}
+  }
+  function applyBootstrap(boot){
+    S.team=boot.team||[];S.apiVersion=Number(boot.apiVersion)||0;S.teamAt=Date.now();
+    const previous=$('nCrm').value;
+    $('nCrm').innerHTML='<option value="">Select CRM</option>'+S.team.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join('');
+    const saved=readJSON(draftKey('newDraft')),selected=previous||(saved&&saved.crm)||S.session.teamMemberName||'';
+    $('nCrm').value=S.team.includes(selected)?selected:'';
+    S.newReady=true;updateLocks();
+    if(S.apiVersion<4)notice('globalNotice','Latest Leads.gs aur Index.html ko ek saath New version mein deploy karein.','warn');
+  }
+  function clearNewAttempt(){S.newAttempt=null;removeDraft('newAttempt');updateLocks();}
+  async function sendNewAttempt(){
+    if(S.write||!S.newAttempt)return;const attempt=S.newAttempt,epoch=S.epoch,start=Date.now();busy(true);notice('newMessage','Saving…','info');$('saveNewBtn').textContent='Saving…';
+    try{
+      const method=attempt.method||'createLead';if(!['createLead','createLeadAndCall'].includes(method))throw new Error('Invalid saved operation. Contact the owner.');
+      const result=await rpc(method,[attempt.payload,attempt.id]);if(epoch!==S.epoch)return;
+      if(!result)throw new Error('Empty save response. Use Retry to verify.');
+      if(result.duplicate){clearNewAttempt();showDuplicate(result.existing?{found:true,canAccess:true,lead:result.existing,id:result.existing.id,name:result.existing.name,disposition:result.existing.disposition}:{found:true,canAccess:false,name:'Existing customer',disposition:'Already assigned to another CRM'});notice('newMessage',result.message||'Customer already exists. Use existing customer actions.','warn');return;}
+      if(!result.success){clearNewAttempt();notice('newMessage',result.message||'Lead could not be saved.','warn');return;}
+      clearNewAttempt();removeDraft('newDraft');$('newForm').reset();$('nMode').value='call';$('nCrm').value=S.team.includes(S.session.teamMemberName)?S.session.teamMemberName:'';
+      nextSeq('duplicate');showDuplicate(null);updateNewMode();
+      notice('newMessage',attempt.payload.name+(method==='createLeadAndCall'?' — lead aur pehli call dono save ho gaye. My Calls mein dobara entry nahi karni.':' — lead save ho gayi. Assigned CRM ki My Calls queue mein first call pending rahegi.')+' ('+((Date.now()-start)/1000).toFixed(1)+'s)','ok');
+    }catch(e){if(epoch===S.epoch){if(validationFailure(e))clearNewAttempt();report('newMessage',e);}}
+    finally{if(epoch===S.epoch){busy(false);updateNewMode();}}
+  }
+  async function saveNew(event){
+    event.preventDefault();if(S.write)return;if(S.newAttempt){await sendNewAttempt();return;}if(!S.newReady)return;
+    try{
+      if(S.duplicate)throw new Error('Customer already exists. Use Record call or Edit existing customer.');
+      const draft=newDraft(),payload=validateLeadFields(draft,draft.mode==='call'&&draft.response==='Not Picked',draft.mode!=='call',draft.mode!=='call');
+      const method=draft.mode==='call'?'createLeadAndCall':'createLead';
+      if(draft.mode!=='call'){payload.product='';payload.city='';}
+      if(method==='createLeadAndCall'){
+        if(S.session.role==='CRM'&&payload.crm!==S.session.teamMemberName)throw new Error('First call record karne ke liye apna CRM naam select karein. Sirf assign karna hai toh Call Pending choose karein.');
+        payload.call=validateCallFields(draft.response,draft.action,draft.followup,payload.note);
+      }
+      saveJSON('newDraft',draft);S.newAttempt={id:uid(),method:method,payload:payload};saveJSON('newAttempt',S.newAttempt);updateLocks();await sendNewAttempt();
+    }catch(e){report('newMessage',e);}
+  }
+  function checkDuplicate(){
+    clearTimeout(S.dupTimer);const n=nextSeq('duplicate'),epoch=S.epoch,mobile=$('nMobile').value.trim();showDuplicate(null);
+    if(!/^\d{10}$/.test(mobile))return;
+    S.dupTimer=setTimeout(async()=>{try{const result=await rpc('checkDuplicateMobile',[mobile]);if(!current('duplicate',n,epoch)||$('nMobile').value.trim()!==mobile||S.newAttempt)return;showDuplicate(result.found?result:null);}catch(e){if(current('duplicate',n,epoch))report('dupNotice',e);}},350);
+  }
+  function validateLeadFields(d,allowUnknownDetails=false,productOptional=false,cityOptional=false){
+    const payload={};['mobile','name','city','source','product','crm','note'].forEach(k=>payload[k]=String(d[k]||'').trim());
+    if(!/^\d{10}$/.test(payload.mobile))throw new Error('Enter a valid 10 digit mobile number.');
+    const labels=allowUnknownDetails===true?{source:'Source',crm:'Assign CRM'}:{name:'Customer / firm name',city:'City',source:'Source',product:'Product / requirement',crm:'Assign CRM'};
+    if(productOptional)delete labels.product;
+    if(cityOptional)delete labels.city;
+    const missing=Object.keys(labels).filter(k=>!payload[k]);if(missing.length)throw new Error('Please fill: '+missing.map(k=>labels[k]).join(', ')+'.');
+    if(!S.team.includes(payload.crm))throw new Error('Select an active CRM team member.');return payload;
+  }
+  function validateCallFields(response,action,localDate,note){
+    if(!['Interested','Call Later','Not Picked','Catalogue Sent','Visit Scheduled','No Requirement'].includes(response))throw new Error('Select customer response first.');
+    const closed=response==='No Requirement',followup=closed?'':fromISTInput(localDate);
+    if(!closed&&(!followup||new Date(followup)<=new Date()))throw new Error('Choose a future follow-up date and time (IST).');
+    if(!closed&&(!action||action==='Close Lead'))throw new Error('Choose an open next action.');
+    return {response:response,nextActionType:closed?'Close Lead':action,nextFollowupAt:followup,visitDate:checkedVisitDate(response,'newVisitDate'),note:note||''};
+  }
+  function updateNewMode(){
+    const calling=$('nMode').value==='call',closed=$('nResponse').value==='No Requirement';
+    toggleCallVisitDate('newVisitDate',calling&&$('nResponse').value==='Visit Scheduled');
+    const unknown=calling&&$('nResponse').value==='Not Picked';
+    [['nName','Customer / firm name'],['nCity','City']].forEach(([id,label])=>{$(id).toggleAttribute('required',!unknown);document.querySelector('label[for="'+id+'"]').textContent=label+(unknown?' (optional)':' *');});
+    $('nCityBox').hidden=!calling;$('nCity').disabled=!calling;$('nCity').required=calling&&!unknown;
+    $('nProductBox').hidden=!calling;$('nProduct').disabled=!calling;$('nProduct').required=calling&&!unknown;
+    document.querySelector('label[for="nProduct"]').textContent='Product / requirement'+(unknown?' (optional)':' *');
+    $('unknownDetailsHint').hidden=!unknown;
+    $('newCallSection').hidden=!calling;$('nResponse').required=calling;$('nResponse').disabled=!calling;
+    $('nFollowup').required=calling&&!closed;$('nFollowup').disabled=!calling||closed;$('nAction').disabled=!calling||closed;
+    if(closed)$('nAction').value='Close Lead';else if($('nAction').value==='Close Lead')$('nAction').value='Call';
+    $('saveNewBtn').textContent=calling?'SAVE LEAD & CALL':'SAVE LEAD — CALL PENDING';
+  }
+  function showDuplicate(result){
+    S.duplicate=result;$('duplicateActions').hidden=!(result&&result.canAccess&&result.lead);
+    notice('dupNotice',result?'Existing customer: '+result.name+' · '+result.disposition+'. New duplicate entry save nahi hogi.':'','warn');updateLocks();
+  }
+  function updateLegacyEditCall(){
+    const on=!$('legacyEditCall').hidden,unknown=on&&$('eResponse').value==='Not Picked',closed=$('eResponse').value==='No Requirement';
+    $('editSubtitle').textContent=on?'Customer details aur call response ek saath save karein.':'Customer details correct karein. Call response badalne ke liye Record Call use karein.';
+    $('saveEditBtn').textContent=on?'SAVE DETAILS & CALL':'SAVE CHANGES';
+    ['eName','eCity','eProduct'].forEach(id=>{$(id).required=!unknown;});
+    $('eCrm').disabled=on||S.session?.role==='CRM';
+    $('eResponse').disabled=!on;$('eResponse').required=on;
+    $('eAction').disabled=!on||closed;$('eFollowup').disabled=!on||closed;$('eFollowup').required=on&&!closed;
+    if(closed)$('eAction').value='Close Lead';else if($('eAction').value==='Close Lead')$('eAction').value='Call';
+    toggleCallVisitDate('editVisitDate',on&&$('eResponse').value==='Visit Scheduled');
+  }
+  function validateLegacyEditCall(d){
+    if(!['Interested','Call Later','Not Picked','Catalogue Sent','Visit Scheduled','No Requirement'].includes(d.response))throw Error('Select customer response first.');
+    const closed=d.response==='No Requirement',followup=closed?'':fromISTInput(d.followup);
+    if(!closed&&(!followup||new Date(followup)<=new Date()))throw Error('Choose a future follow-up date and time (IST).');
+    if(!closed&&(!d.action||d.action==='Close Lead'))throw Error('Choose an open next action.');
+    return {response:d.response,nextActionType:closed?'Close Lead':d.action,nextFollowupAt:followup,visitDate:checkedVisitDate(d.response,'editVisitDate'),note:d.note||''};
+  }
+  $('eResponse').addEventListener('change',()=>{updateLegacyEditCall();persistEditDraft();});
+  function editDraft(){if(!S.editLead)return null;return {leadId:S.editLead.id,knownRowVersion:S.editLead.rowVersion,mobile:$('eMobile').value,name:$('eName').value,city:$('eCity').value,source:$('eSource').value,product:$('eProduct').value,crm:$('eCrm').value,note:$('eNote').value,legacyCall:!$('legacyEditCall').hidden,response:$('eResponse').value,action:$('eAction').value,followup:$('eFollowup').value,visitDate:$('editVisitDate').value};}
+  function persistEditDraft(){if(S.session&&S.editLead)saveJSON('editDraft',S.editConflict||editDraft());}
+  function fillEditDraft(d){
+    if(!d)return;const fields={mobile:'eMobile',name:'eName',city:'eCity',source:'eSource',product:'eProduct',crm:'eCrm',note:'eNote'};
+    Object.keys(fields).forEach(k=>{if(d[k]!=null){const el=$(fields[k]);if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===String(d[k]))&&d[k]){const option=document.createElement('option');option.value=d[k];option.textContent=d[k];el.appendChild(option);}el.value=d[k];}});
+    if(d.response!=null||d.call){$('eResponse').value=d.call?d.call.response:d.response;$('eAction').value=d.call?d.call.nextActionType:d.action;$('eFollowup').value=d.call?toISTInput(d.call.nextFollowupAt):d.followup;$('editVisitDate').value=d.call?d.call.visitDate||'':d.visitDate||'';}
+    updateLegacyEditCall();
+  }
+  function showEditConflict(d){
+    S.editConflict=d;$('editConflictBox').hidden=!d;
+    if(d){$('editConflictText').textContent=['Name: '+d.name,'Mobile: '+d.mobile,'City: '+d.city,'Source: '+d.source,'Product: '+d.product,'CRM: '+d.crm,'Note: '+(d.note||'—')].join('\n');saveJSON('editDraft',d);}
+  }
+  async function startEdit(lead,legacyCall=false){
+    if(S.write)return;
+    if(S.editAttempt){notice('globalNotice','Previous edit pehle Retry same edit se verify karein.','warn');navigate('edit');return;}
+    if(S.callAttempt&&S.callAttempt.payload.leadId===lead.id){navigate('calls');notice('callMessage','Is customer ka pending call save pehle verify karein.','warn');return;}
+    persistEditDraft();const old=readJSON(draftKey('editDraft'));const epoch=S.epoch;
+    navigate('edit',lead);S.editLead=lead;await loadTeam();if(epoch!==S.epoch||!S.session||S.editLead?.id!==lead.id||S.page!=='edit')return;
+    renderEdit(lead,old&&old.leadId===lead.id?Object.assign({},old,{legacyCall:legacyCall||old.legacyCall}):{legacyCall:legacyCall,knownRowVersion:lead.rowVersion});
+  }
+  function renderEdit(lead,draft){
+    S.editLead=lead;showEditConflict(null);$('editForm').reset();$('legacyEditCall').hidden=!(draft&&draft.legacyCall);
+    $('eCrm').innerHTML='<option value="">Select CRM</option>'+S.team.map(t=>'<option value="'+esc(t)+'">'+esc(t)+'</option>').join('');
+    fillEditDraft(lead);
+    if(draft){if(Number(draft.knownRowVersion)===Number(lead.rowVersion))fillEditDraft(draft);else showEditConflict(draft);}
+    $('editNav').hidden=false;updateLocks();persistEditDraft();
+  }
+  async function resumeEdit(){
+    const epoch=S.epoch,n=nextSeq('edit'),saved=S.editAttempt?S.editAttempt.payload:readJSON(draftKey('editDraft'));
+    if(!saved){notice('editMessage','Search se customer kholkar Edit lead details choose karein.','info');return;}
+    notice('editMessage','Loading latest customer details…','info');
+    try{await loadTeam();const result=await rpc('getCustomerProfile',[saved.leadId]);if(!current('edit',n,epoch)||S.page!=='edit')return;renderEdit(result.lead,saved);notice('editMessage',S.editAttempt?'Pending edit ka result Retry same edit se verify karein.':'');}catch(e){if(current('edit',n,epoch))report('editMessage',e);}
+  }
+  async function saveEdit(event){
+    event.preventDefault();if(S.write)return;if(S.editAttempt){await sendEditAttempt();return;}if(!S.editLead||!S.newReady)return;
+    try{
+      if(S.editConflict)throw new Error('Latest details review karke Use my earlier changes dabayein, ya pehle earlier changes discard karein.');
+      const d=editDraft(),payload=validateLeadFields(d,d.legacyCall&&d.response==='Not Picked');payload.leadId=d.leadId;payload.knownRowVersion=d.knownRowVersion;
+      if(d.legacyCall){payload.legacyCall=true;payload.call=validateLegacyEditCall(d);}
+      saveJSON('editDraft',d);S.editAttempt={id:uid(),payload:payload};saveJSON('editAttempt',S.editAttempt);updateLocks();await sendEditAttempt();
+    }catch(e){report('editMessage',e);}
+  }
+  function clearEditAttempt(){S.editAttempt=null;removeDraft('editAttempt');updateLocks();}
+  async function sendEditAttempt(){
+    if(S.write||!S.editAttempt)return;const attempt=S.editAttempt,epoch=S.epoch,start=Date.now();busy(true);notice('editMessage','Saving changes…','info');
+    try{
+      const result=await rpc(attempt.payload.legacyCall?'saveLegacyDetailsAndCall':'updateLead',[attempt.payload,attempt.id]);if(epoch!==S.epoch)return;if(!result)throw new Error('Empty save response. Retry same edit.');
+      if(result.conflict){clearEditAttempt();renderEdit(result.latest,{legacyCall:!!attempt.payload.legacyCall,knownRowVersion:result.latest.rowVersion});showEditConflict(attempt.payload);notice('editMessage','Customer kisi aur ne update kiya hai. Latest details aur apne earlier changes review karein.','warn');return;}
+      if(!result.success){clearEditAttempt();notice('editMessage',result.message||'Changes could not be saved.','warn');return;}
+      clearEditAttempt();removeDraft('editDraft');S.editConflict=null;S.editLead=null;updateLocks();
+      notice('editMessage',(attempt.payload.legacyCall?'Details aur call response dono save ho gaye. ':'')+'Changes saved ('+((Date.now()-start)/1000).toFixed(1)+'s). Call history preserved. Customer ko Search se dobara khol sakte hain.','ok');
+      // Stale call-card versions must never be silently reused after an edit.
+      if(S.lead&&S.lead.id===attempt.payload.leadId){S.lead=null;$('leadCard').hidden=true;}
+      nextSeq('owner');nextSeq('search');$('searchResults').innerHTML='';S.duplicate=null;$('duplicateActions').hidden=true;notice('dupNotice','');
+    }catch(e){if(epoch===S.epoch){if(validationFailure(e))clearEditAttempt();report('editMessage',e);}}
+    finally{if(epoch===S.epoch)busy(false);}
+  }
+  function reportDateLabel(value){const p=String(value).split('-');return p.length===3?p[2]+'-'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(p[1])-1]+'-'+p[0].slice(-2):value;}
+  function setReportPreset(kind,load=true){
+    const today=toISTInput(new Date()).slice(0,10);let from=today,to=today;
+    const shift=days=>new Date(Date.parse(today+'T00:00:00Z')+days*86400000).toISOString().slice(0,10);
+    if(kind==='yesterday')from=to=shift(-1);if(kind==='week')from=shift(-6);if(kind==='month')from=today.slice(0,8)+'01';
+    $('reportFrom').value=from;$('reportTo').value=to;if(load)loadCallReport(0);
+  }
+  function reportDatesChanged(){nextSeq('callReport');S.reportLoading=false;S.reportApplied=null;$('reportApply').disabled=false;$('callReportContent').hidden=true;$('reportRange').textContent='Dates changed — press Apply dates.';notice('reportMessage','');}
+  async function loadCallReport(offset=0,provided=null){
+    if(S.session?.role!=='Owner'||S.write)return;
+    const n=nextSeq('callReport'),epoch=S.epoch;S.reportLoading=false;$('reportApply').disabled=false;$('callReportContent').hidden=true;notice('reportMessage','');
+    const from=$('reportFrom').value,to=$('reportTo').value;
+    const valid=d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&!isNaN(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d;
+    if(!valid(from)||!valid(to)||from>to||Number(from.slice(0,4))<1970){$('reportRange').textContent='';notice('reportMessage','Choose valid From and To dates. From date cannot be after To date.','err');return;}
+    if((Date.parse(to)-Date.parse(from))/86400000+1>366){$('reportRange').textContent='';notice('reportMessage','Select up to 366 days at a time.','err');return;}
+    S.reportLoading=true;$('reportApply').disabled=true;$('reportPrev').disabled=true;$('reportNext').disabled=true;$('reportRange').textContent='Loading '+reportDateLabel(from)+' to '+reportDateLabel(to)+'…';
+    try{
+      const d=await (provided||rpc('getOwnerCallReport',[from,to,offset,50]));
+      if(!current('callReport',n,epoch)||S.page!=='owner')return;
+      if(d?.loadError)throw Error(d.loadError);
+      if(!d||!d.totals||!Array.isArray(d.items))throw Error('Could not load call report. Apply dates to retry.');
+      S.reportOffset=d.offset;S.reportHasMore=d.hasMore;S.reportApplied={from:from,to:to};
+      $('reportRange').textContent=reportDateLabel(d.fromDate)+' to '+reportDateLabel(d.toDate)+' · India time (IST)';
+      $('reportKpis').innerHTML=kpi('☎','Saved call records',d.totals.records)+kpi('👥','Unique customers',d.totals.uniqueCustomers)+kpi('📵','Not Picked',d.totals.notPicked)+kpi('💬','Other responses',d.totals.otherResponses);
+      const stats=(name,r)=>'<tr><td>'+name+'</td><td>'+esc(r.records)+'</td><td>'+esc(r.uniqueCustomers)+'</td><td>'+esc(r.notPicked)+'</td></tr>';
+      $('reportDays').innerHTML=(d.byDay||[]).map(r=>stats(esc(reportDateLabel(r.date)),r)).join('');
+      $('reportCrms').innerHTML=(d.byCrm||[]).map(r=>stats(esc(r.crm),r)).join('')||'<tr><td colspan="4">No calls in this range.</td></tr>';
+      $('reportCalls').innerHTML=d.items.map(r=>'<tr><td>'+esc(r.callDisplay)+'</td><td>'+(r.canAccess?'<button class="linkbutton" data-profile="'+esc(r.leadId)+'">'+esc(r.name)+'</button>':esc(r.name))+'</td><td>'+crmPhoneQrMarkup(r.mobile,r.name)+'</td><td>'+esc(r.crm)+'</td><td>'+esc(r.response||'—')+'</td><td>'+esc(r.nextFollowupDisplay||'—')+'</td><td class="noteText">'+esc(r.note||'—')+'</td></tr>').join('')||'<tr><td colspan="7">No saved calls for the selected dates.</td></tr>';
+      $('reportPage').textContent=d.total?(d.offset+1)+'–'+(d.offset+d.items.length)+' of '+d.total:'0 records';
+      $('reportPrev').disabled=d.offset===0;$('reportNext').disabled=!d.hasMore;$('callReportContent').hidden=false;
+      const w=d.warnings||{},warnings=[];
+      if(w.invalidDateRecordsAllTime)warnings.push(w.invalidDateRecordsAllTime+' CallLog rows have invalid/missing dates (across all dates) and could not be included.');
+      if(w.duplicateIdsSkippedInRange)warnings.push(w.duplicateIdsSkippedInRange+' repeated record IDs skipped in this range.');
+      if(w.missingLeadIdsInRange)warnings.push(w.missingLeadIdsInRange+' records lack a customer ID; included in saved calls, excluded from unique customers.');
+      if(warnings.length)notice('reportMessage',warnings.join('\n'),'warn');
+    }catch(e){if(current('callReport',n,epoch)){$('reportRange').textContent='Report not loaded';report('reportMessage',e);}}
+    finally{if(current('callReport',n,epoch)){S.reportLoading=false;$('reportApply').disabled=false;}}
+  }
+  function loadOwnerView(){if(S.write)return;mountVisits('owner');if(!$('reportFrom').value||!$('reportTo').value)setReportPreset('today',false);const shared=rpc('getCrmScreenData',['owner',$('reportFrom').value,$('reportTo').value]);loadCallReport(0,shared.then(d=>d.report));loadVisits(shared.then(d=>d.visits));if($('ownerLive').open)loadOwner();}
+  async function loadOwner(){const n=nextSeq('owner'),epoch=S.epoch;const q=$('ownerSearch').value.trim();$('ownerResultsInfo').textContent='Loading…';try{const data=await rpc('getOwnerDashboard',[q]);if(!current('owner',n,epoch))return;let overdue=0;Object.values(data.perf||{}).forEach(p=>overdue+=Number(p.overdue)||0);$('ownerKpis').innerHTML=kpi('🆕','First call pending',data.kpis.freshPending)+kpi('🕒','Later today',data.kpis.callbacksDue)+kpi('⚠','Overdue / due now',data.kpis.overdue==null?overdue:data.kpis.overdue)+kpi('📅','After today',data.kpis.upcoming)+kpi('💬','Interested',data.kpis.interested)+kpi('☎','Customers called today',data.kpis.callsDoneToday)+kpi('📂','Legacy review pending',data.legacyPending)+kpi('📝','Follow-up missing',data.kpis.unscheduled);$('perfRows').innerHTML=(data.team||[]).map(team=>{const p=data.perf[team]||{};return '<tr><td>'+esc(team)+'</td><td>'+esc(p.fresh||0)+'</td><td>'+esc(p.due||0)+'</td><td>'+esc(p.overdue||0)+'</td><td>'+esc(p.done||0)+'</td></tr>';}).join('');$('ownerRows').innerHTML=(data.queue||[]).map(c=>'<tr><td><span class="badge">'+esc(c.score)+'/10</span></td><td><button class="linkbutton" data-profile="'+esc(c.id)+'">'+esc(c.name||'Name not available')+'</button></td><td>'+crmPhoneQrMarkup(c.mobile,c.name)+'</td><td>'+esc(c.crm)+'</td><td>'+esc(c.disposition)+'</td><td>'+esc(c.lastCallDisplay)+'</td><td>'+esc(c.nextFollowupDisplay)+'</td></tr>').join('')||'<tr><td colspan="7">No matching customers.</td></tr>';const count=data.totalMatches==null?data.queue.length:data.totalMatches;$('ownerResultsInfo').textContent=data.hasMore?'Showing first '+data.queue.length+' of '+count+' matches. Search ko narrow karke baaki customers dhoondhein.':count+' customer(s). Click a name for details.';}catch(e){if(current('owner',n,epoch)){report('globalNotice',e);$('ownerResultsInfo').textContent='Could not load customers.';}}}
+  async function searchCustomers(){const n=nextSeq('search'),epoch=S.epoch;const q=$('globalSearch').value.trim();$('searchResults').innerHTML='';if(!q){$('searchInfo').textContent='';return}$('searchInfo').textContent='Searching…';try{const result=await rpc('searchCustomers',[q]);if(!current('search',n,epoch)||$('globalSearch').value.trim()!==q)return;$('searchResults').innerHTML=(result.leads||[]).map(c=>'<div class="review"><button class="linkbutton" data-profile="'+esc(c.id)+'">'+esc(c.name||'Name not available')+'</button><div class="small">'+crmPhoneQrMarkup(c.mobile,c.name)+' · '+esc(c.crm)+' · '+esc(c.disposition)+'</div></div>').join('')+(result.legacy||[]).map(c=>'<div class="review"><strong>'+esc(c.name||'Name not available')+'</strong><div class="small">'+crmPhoneQrMarkup(c.mobile,c.name)+' · Legacy Review · '+esc(c.rows)+' source rows</div><button class="btn" data-nav="legacy">Open Legacy Review</button></div>').join('');const count=(result.leads||[]).length+(result.legacy||[]).length;$('searchInfo').textContent=result.hasMore?'Showing limited matches. Type a more specific name or mobile.':count+' result(s).';}catch(e){if(current('search',n,epoch)){$('searchInfo').textContent=messageOf(e);report('globalNotice',e)}}}
+  function closeDrawer(){nextSeq('drawer');$('drawer').hidden=true;$('overlay').hidden=true;S.drawerLead=null;}
+  async function openDrawer(id){const n=nextSeq('drawer'),epoch=S.epoch;$('drawer').hidden=false;$('overlay').hidden=false;$('drawerContent').textContent='Loading…';try{const result=await rpc('getCustomerProfile',[id]);if(!current('drawer',n,epoch))return;const c=result.lead;S.drawerLead=c;$('drawerTitle').textContent=c.name||'Name not available';$('drawerContent').innerHTML='<div class="card"><p><b>Mobile:</b> '+crmPhoneQrMarkup(c.mobile,c.name)+'</p><p><b>City:</b> '+esc(c.city||'—')+'</p><p><b>Source:</b> '+esc(c.source||'—')+'</p><p><b>Product:</b> '+esc(c.product||'—')+'</p><p><b>Priority:</b> '+esc(c.score)+'/10</p><p><b>Last call:</b> '+esc(c.lastCallDisplay||'—')+'</p><p><b>Saved call records:</b> '+esc((result.history||[]).length)+'</p><p><b>CRM:</b> '+esc(c.crm)+'</p><p><b>Response:</b> '+esc(c.disposition)+'</p><p><b>Next action:</b> '+esc(c.nextActionType||'—')+'</p><p><b>Follow-up (IST):</b> '+esc(c.nextFollowupDisplay||'—')+'</p><p class="noteText"><b>Note:</b> '+esc(c.note||'—')+'</p></div><div class="actions"><button id="drawerVisit" class="btn">Manage visits</button><button id="drawerCall" class="primary">Record call / update follow-up</button><button id="drawerEdit" class="btn">Edit lead details</button></div><h3 style="margin-top:22px">Customer journey</h3><div class="timeline">'+((result.history||[]).map(h=>'<div class="event"><div class="date">'+esc(h[0])+'</div><div class="text">'+esc(h[1])+'</div></div>').join('')||'<p class="small">No recorded calls yet.</p>')+'</div>';$('drawerVisit').addEventListener('click',()=>{const lead=S.drawerLead;closeDrawer();openVisitForm(lead);});$('drawerCall').addEventListener('click',()=>{if(S.write)return;if(S.callAttempt&&!S.bgSaving){notice('globalNotice','Finish the pending call save first.','warn');closeDrawer();navigate('calls');return}const lead=S.drawerLead;closeDrawer();navigate('calls',lead);});$('drawerEdit').addEventListener('click',()=>{if(S.write||!S.drawerLead)return;const lead=S.drawerLead;closeDrawer();startEdit(lead);});$('drawerClose').focus();}catch(e){if(current('drawer',n,epoch))$('drawerContent').textContent=messageOf(e)}}
+  // Parse CSV locally, then keep every normalized mobile's full history together.
+  function bulkCsvRows(text){
+    text=String(text).replace(/^\uFEFF/,'');const rows=[];let row=[],value='',quoted=false,afterQuote=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(quoted){if(c==='"'){if(text[i+1]==='"'){value+='"';i++;}else{quoted=false;afterQuote=true;}}else value+=c;continue;}
+      if(c===','||c==='\n'||c==='\r'){row.push(value);value='';afterQuote=false;if(c!==','){rows.push(row);row=[];if(c==='\r'&&text[i+1]==='\n')i++;}continue;}
+      if(afterQuote){if(c===' '||c==='\t')continue;throw Error('Invalid CSV after quoted field. Save as CSV UTF-8 and retry.');}
+      if(c==='"'){if(value)throw Error('Invalid CSV quote. Save as CSV UTF-8 and retry.');quoted=true;}else value+=c;
+    }
+    if(quoted)throw Error('CSV has an unclosed quote. Save as CSV UTF-8 and retry.');
+    if(row.length||value||afterQuote)rows.push([...row,value]);return rows;
+  }
+  function bulkMobile(value){const d=String(value||'').replace(/\D/g,'');if(/^\d{10}$/.test(d))return d;if(/^91\d{10}$/.test(d))return d.slice(2);if(/^0091\d{10}$/.test(d))return d.slice(4);if(/^0\d{10}$/.test(d))return d.slice(1);return '';}
+  function bulkChunks(text){
+    const rows=bulkCsvRows(text);if(!rows.length)throw Error('Choose a non-empty CSV file.');
+    const header=rows.shift(),normalized=header.map(v=>v.trim().toLowerCase());let col=-1;
+    for(const alias of ['mobile','mobile number','mobile no','mobile no.','phone','phone number','contact number']){const matches=normalized.map((h,i)=>h===alias?i:-1).filter(i=>i>=0);if(matches.length>1)throw Error('Duplicate CSV heading: '+alias);if(matches.length){col=matches[0];break;}}
+    if(col<0)throw Error('Mobile column not found. Use Mobile or Mobile Number.');
+    const line=row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',');
+    const first=line(header)+'\r\n',groups=new Map();let total=0,invalid=0;
+    for(const row of rows){if(!row.some(v=>v.trim()))continue;if(JSON.stringify(row).length>40000)throw Error('A CSV row is too long for the archive. Shorten that row.');total++;const phone=bulkMobile(row[col]);if(!phone)invalid++;const key=phone||'invalid:'+total;if(!groups.has(key))groups.set(key,{phone,rows:[]});groups.get(key).rows.push(row);}
+    if(!total)throw Error('No non-empty data rows found.');
+    const chunks=[];let parts=[],count=0,phones=0,chars=first.length;
+    const flush=()=>{if(parts.length)chunks.push(first+parts.join(''));parts=[];count=0;phones=0;chars=first.length;};
+    for(const group of groups.values()){const value=group.rows.map(r=>line(r)+'\r\n').join('');if(parts.length&&(phones+(group.phone?1:0)>200||count+group.rows.length>1000||chars+value.length>500000))flush();parts.push(value);count+=group.rows.length;phones+=group.phone?1:0;chars+=value.length;}
+    flush();return {chunks,total,unique:[...groups.values()].filter(g=>g.phone).length,duplicates:[...groups.values()].filter(g=>g.phone&&g.rows.length>1).length,invalid};
+  }
+  function resetUpload(){nextSeq('upload');S.batch=null;S.uploadBusy=false;$('fileInput').value='';$('fileName').textContent='';$('uploadPreview').hidden=true;$('openLegacyBtn').hidden=true;notice('uploadMessage','');updateLocks();}
+  async function analyzeFile(){
+    if(S.write||S.uploadBusy)return;const file=$('fileInput').files[0],n=nextSeq('upload'),epoch=S.epoch;
+    S.batch=null;$('uploadPreview').hidden=true;$('openLegacyBtn').hidden=true;notice('uploadMessage','');if(!file)return;
+    if(!/\.csv$/i.test(file.name)){notice('uploadMessage','Choose a CSV file. Excel file ko Save As CSV UTF-8 karke upload karein.','err');return;}
+    S.uploadBusy=true;busy(true);$('fileName').textContent=file.name;notice('uploadMessage','CSV read ho rahi hai…','info');
+    try{
+      const plan=bulkChunks(await file.text()),batches=[],preview=[];
+      for(let i=0;i<plan.chunks.length;i++){
+        if(!current('upload',n,epoch))return;
+        notice('uploadMessage','Analyzing '+(i+1)+' / '+plan.chunks.length+' batches — '+plan.total+' source rows. Tab khula rakhein.','info');
+        const r=await rpc('analyzeBulkUpload',[plan.chunks[i]]);if(!current('upload',n,epoch))return;
+        if(!r?.batchId)throw Error('Archive not confirmed. Select the same CSV again to retry.');
+        batches.push({id:r.batchId,result:null});preview.push(...(r.preview||[]).slice(0,Math.max(0,10-preview.length)));plan.chunks[i]='';
+      }
+      S.batch={batches,total:plan.total};
+      $('uploadStats').innerHTML=kpi('📄','Source rows',plan.total)+kpi('👥','Unique valid mobiles',plan.unique)+kpi('🔁','Mobiles with multiple rows',plan.duplicates)+kpi('⚠','Invalid mobiles archived',plan.invalid);
+      $('uploadRows').innerHTML=preview.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+crmPhoneQrMarkup(p.mobile,p.name)+'</td><td>'+esc(p.rows)+'</td><td>'+esc(p.lastKnownDisposition)+'</td><td>'+esc(p.lastKnownDate||'Needs review')+'</td></tr>').join('')||'<tr><td colspan="5">No valid mobiles. Source rows remain archived for review.</td></tr>';
+      $('uploadPreview').hidden=false;notice('uploadMessage','All '+batches.length+' batches archived. Preview check karke approve karein.','info');
+    }catch(e){if(current('upload',n,epoch))notice('uploadMessage',messageOf(e)+' Same CSV dobara select karke retry karein; saved archive batches reuse honge.','err');}
+    finally{S.uploadBusy=false;busy(false);}
+  }
+  async function approveUpload(){
+    if(S.write||S.uploadBusy||!S.batch)return;const batch=S.batch,epoch=S.epoch,n=S.seq.upload;busy(true);$('approveUploadBtn').textContent='Saving…';
+    try{
+      for(let i=0;i<batch.batches.length;i++){
+        const part=batch.batches[i];if(part.result)continue;
+        notice('uploadMessage','Approving '+(i+1)+' / '+batch.batches.length+' batches. Tab khula rakhein.','info');
+        const r=await rpc('approveBulkUpload',[part.id]);if(!current('upload',n,epoch)||S.batch!==batch)return;
+        if(!r?.success)throw Error('Approval not confirmed. Retry approval.');part.result=r;
+      }
+      const sum=key=>batch.batches.reduce((s,b)=>s+(Number(b.result[key])||0),0);
+      notice('uploadMessage','Approval complete.\nReview records: '+sum('added')+'\nAlready in live leads: '+sum('skippedExisting')+'\nAlready in legacy review: '+sum('skippedLegacy')+'\nInvalid mobile rows archived: '+sum('invalidMobiles')+'\nTotal source rows archived: '+sum('archivedRows'),'ok');S.batch=null;$('openLegacyBtn').hidden=false;
+    }catch(e){if(current('upload',n,epoch))notice('uploadMessage',messageOf(e)+' Approve dobara dabayein. Completed batches dobara add nahi honge.','err');}
+    finally{busy(false);$('approveUploadBtn').textContent=S.batch?'RETRY / CONTINUE APPROVAL':'APPROVE & SEND TO REVIEW';}
+  }
+  async function loadLegacy(){const n=nextSeq('legacy'),epoch=S.epoch;$('legacyPrev').disabled=true;$('legacyNext').disabled=true;try{const result=await rpc('getLegacyPage',[S.legacyOffset,pageSize]);if(!current('legacy',n,epoch))return;S.legacyTotal=result.total;if(result.total>0&&S.legacyOffset>=result.total){S.legacyOffset=Math.floor((result.total-1)/pageSize)*pageSize;loadLegacy();return}$('legacyTotal').textContent=result.total+' total pending records';$('legacyCards').innerHTML=(result.items||[]).map(x=>'<article class="review"><div class="head"><div><h3>'+esc(x.name)+'</h3><div class="small">'+(S.session.role==='CRM'?esc(x.mobile):crmPhoneQrMarkup(x.mobile,x.name))+' · '+esc(x.rows)+' source rows</div></div><span class="badge">Needs review</span></div><div class="small"><b>Last known:</b> '+esc(x.lastKnownDisposition)+' · '+esc(x.lastKnownDate||'Date unclear')+'</div><div class="oldrows">'+(x.details||[]).map(text=>'<div class="oldrow">'+esc(text)+'</div>').join('')+'</div><div class="review-actions">'+(S.session.role==='CRM'?[['active','CALL NOW']]:[['active','ACTIVE / CALL NOW'],['existing','EXISTING CUSTOMER'],['notinterested','NOT INTERESTED'],['duplicate','DUPLICATE'],['invalid','INVALID NUMBER']]).map(([type,label])=>'<button class="btn" data-resolve="'+esc(type)+'" data-record="'+esc(x.id)+'">'+label+'</button>').join('')+'<button class="btn" data-keep="1">KEEP FOR REVIEW</button></div></article>').join('')||'<div class="panel empty">No pending legacy records.</div>';$('legacyPageInfo').textContent=result.total?(S.legacyOffset+1)+'–'+(S.legacyOffset+result.items.length)+' of '+result.total:'0 records';$('legacyPrev').disabled=S.legacyOffset===0;$('legacyNext').disabled=!result.hasMore;}catch(e){if(current('legacy',n,epoch))report('legacyMessage',e)}}
+  async function resolveLegacy(id,type){
+    if(S.write)return;
+    if(S.session.role==='CRM'&&S.callAttempt&&!S.bgSaving){notice('legacyMessage','My Calls mein previous call save ko pehle Retry karein.','warn');return;}
+    if(S.session.role==='CRM'&&S.editAttempt){notice('legacyMessage','Resume Edit mein previous edit save ko pehle Retry karein.','warn');return;}
+    const epoch=S.epoch;let selected=null;
+    notice('legacyMessage','Customer open ho raha hai…','info');
+    busy(true);document.querySelectorAll('[data-resolve]').forEach(b=>b.disabled=true);
+    try{
+      const result=await rpc('resolveLegacyRecord',[id,type,uid()]);
+      if(epoch!==S.epoch)return;
+      if(!result||!result.success)throw new Error('Resolution was not confirmed. Retry to verify.');
+      notice('legacyMessage',result.message||'Record resolved.','ok');
+      if(result.lead){
+        selected=result.lead;
+        if(result.bootstrap)applyBootstrap(result.bootstrap);
+        // Leave the list immediately; entering it again always fetches fresh pending records.
+        nextSeq('legacy');
+      }else if(result.leadId){
+        // Compatible with a deployment still running the older Legacy.gs.
+        try{const profile=await rpc('getCustomerProfile',[result.leadId]);selected=profile.lead;}
+        catch(e){notice('legacyMessage','Customer assigned ho gaya. My Calls se open karein. '+messageOf(e),'warn');}
+      }else{await loadLegacy();}
+    }catch(e){if(epoch===S.epoch){await loadLegacy();report('legacyMessage',e);}}
+    finally{if(epoch===S.epoch){busy(false);document.querySelectorAll('[data-resolve]').forEach(b=>b.disabled=false);}}
+    if(epoch===S.epoch&&selected)await startEdit(selected,true);
+  }
+  setInterval(()=>{if(S.session&&S.page==='legacy'&&!S.write&&!document.hidden)fresh(()=>loadLegacy());},20000);
+  setInterval(prefetchScreens,45000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)prefetchScreens();});
+  async function loadUsers(){
+    if(S.session?.role!=='Owner')return;const epoch=S.epoch,n=nextSeq('users');
+    $('usersRefresh').disabled=true;
+    try{const users=await rpc('adminListUsers');if(!current('users',n,epoch))return;
+      $('usersRows').innerHTML=users.map(u=>'<tr><td>'+esc(u.displayName)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td>'+(u.active?'Active':'Access removed')+'</td><td>'+(u.role==='CRM'&&u.active?'<button type="button" class="btn" data-remove-user="'+esc(u.username)+'">Remove Access</button>':u.role==='Owner'?'Owner account':'—')+'</td></tr>').join('');
+    }catch(e){if(current('users',n,epoch))report('usersMessage',e);}finally{if(current('users',n,epoch))$('usersRefresh').disabled=S.write;}
+  }
+  async function addCrmUser(event){
+    event.preventDefault();if(S.write)return;
+    if($('userPassword').value!==$('userPasswordConfirm').value){notice('usersMessage','Passwords match nahi kar rahe.','warn');return;}
+    const epoch=S.epoch,payload={displayName:$('userName').value,username:$('userLogin').value,password:$('userPassword').value};
+    busy(true);$('userFields').disabled=true;$('usersRefresh').disabled=true;
+    try{const result=await rpc('adminCreateCrmUser',[payload]);if(epoch!==S.epoch)return;if(!result?.success)throw Error('User creation not confirmed. Retry with the same details.');$('addUserForm').reset();S.teamAt=0;notice('usersMessage',result.message,'ok');await loadUsers();}
+    catch(e){if(epoch===S.epoch)report('usersMessage',e);}
+    finally{payload.password='';if(epoch===S.epoch){busy(false);$('userFields').disabled=false;$('usersRefresh').disabled=false;}}
+  }
+  async function removeCrmAccess(username){
+    if(S.write)return;
+    if(!confirm('Remove login access for '+username+'? Customer records and call history will remain.'))return;
+    const epoch=S.epoch;busy(true);$('userFields').disabled=true;$('usersRefresh').disabled=true;
+    try{const result=await rpc('adminRemoveCrmAccess',[username]);if(epoch!==S.epoch)return;if(!result?.success)throw Error('Access removal not confirmed. Refresh and retry.');S.teamAt=0;notice('usersMessage',result.message,'ok');await loadUsers();}
+    catch(e){if(epoch===S.epoch)report('usersMessage',e);}
+    finally{if(epoch===S.epoch){busy(false);$('userFields').disabled=false;$('usersRefresh').disabled=false;}}
+  }
+  $('addUserForm').addEventListener('submit',addCrmUser);
+  $('usersRefresh').addEventListener('click',()=>{if(!S.write)loadUsers();});
+  $('usersRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-user]');if(b)removeCrmAccess(b.dataset.removeUser);});
+  function navigate(page,explicitLead){
+    if(!S.session||S.write)return;if(['owner','upload','users'].includes(page)&&S.session.role!=='Owner')return;
+    if(S.page==='legacy'&&page!=='legacy')nextSeq('legacy');
+    closeDrawer();persistCallDraft();persistNewDraft();persistEditDraft();if(S.page==='queueDetails'){nextSeq('details');S.detailsLoading=false;}
+    if(S.page==='owner'&&page!=='owner'){nextSeq('callReport');S.reportLoading=false;}if(S.page==='calls'&&page!=='calls'){nextSeq('calls');S.queueLoading=false;}if(S.page==='edit'&&page!=='edit')nextSeq('edit');
+    if(['owner','visits'].includes(S.page)&&page!==S.page)nextSeq('visits');
+    S.page=page;notice('globalNotice','');document.querySelectorAll('.page').forEach(el=>el.hidden=el.id!=='page-'+page);document.querySelectorAll('.nav [data-nav]').forEach(el=>el.classList.toggle('active',el.dataset.nav===page));
+    if(page==='visits'){mountVisits('visits');loadVisits();}if(page==='owner')loadOwnerView();if(page==='calls')loadCalls(explicitLead);if(page==='new'){loadTeam();updateNewMode();updateLocks();}if(page==='edit'&&!explicitLead)resumeEdit();if(page==='users')loadUsers();if(page==='legacy')loadLegacy();if(page==='search'&&$('globalSearch').value.trim())searchCustomers();
+  }
+  function enterApp(session,boot){$('addUserForm').reset();$('userFields').disabled=false;$('usersRows').innerHTML='';notice('usersMessage','');
+    visitData=[];visitEditing=null;visitAttempt=null;$('visitRows').innerHTML='';$('visitKpis').innerHTML='';$('visitTotals').innerHTML='';$('visitUpcomingKpis').innerHTML='';$('visitUpcomingDates').textContent='';$('visitRangeKpis').innerHTML='';$('visitTeam').innerHTML='';$('visitStats').textContent='';$('visitForm').hidden=true;$('visitFields').disabled=false;$('visitFrom').value='';$('visitTo').value='';
+    $('reportFrom').value='';$('reportTo').value='';$('callReportContent').hidden=true;$('ownerLive').open=false;S.reportApplied=null;
+    S.session=session;S.epoch++;S.write=false;S.bgSaving=false;S.queue=[];S.doneIds=new Set();readCache.clear();pendingReads.clear();$('bgSaveBox').hidden=true;S.bgProblem=null;S.newReady=false;S.team=[];S.teamAt=0;S.teamPromise=null;S.queueLoading=false;S.editLead=null;S.editConflict=null;S.duplicate=null;
+    store.set('crm_identity',JSON.stringify({username:session.username,displayName:session.displayName,role:session.role,teamMemberName:session.teamMemberName||''}));
+    S.callAttempt=readJSON(draftKey('callAttempt'));S.newAttempt=readJSON(draftKey('newAttempt'));S.editAttempt=readJSON(draftKey('editAttempt'));
+    $('loginScreen').hidden=true;$('appShell').hidden=false;$('loginPass').value='';$('navUser').textContent=session.displayName+' ('+session.role+')';
+    document.querySelectorAll('[data-owner]').forEach(el=>el.hidden=session.role!=='Owner');$('visitsNav').hidden=session.role==='Owner';$('callsNav').hidden=session.role==='Owner'&&!session.teamMemberName;$('callsTitle').textContent=session.displayName+' — My Calls';
+    S.lead=null;S.response='';$('newForm').reset();$('nMode').value='call';fillNewDraft(readJSON(draftKey('newDraft')));$('editForm').reset();$('duplicateActions').hidden=true;notice('dupNotice','');
+    if(boot)applyBootstrap(boot);else loadTeam();
+    navigate(S.editAttempt?'edit':session.role==='Owner'?'owner':'calls');updateNewMode();busy(false);setTimeout(prefetchScreens,2500);
+  }
+  async function login(event){event.preventDefault();const username=$('loginUser').value.trim(),password=$('loginPass').value;if(!username||!password)return;$('loginBtn').disabled=true;notice('loginNotice','Checking…','info');try{const result=await rpc('login',[username,password],true);if(!result||!result.token||!result.session)throw new Error('Invalid login response.');S.token=result.token;store.set('crm_token',S.token);enterApp(result.session);notice('loginNotice','');}catch(e){notice('loginNotice',messageOf(e),'err');}finally{$('loginBtn').disabled=false;}}
+  async function logout(){if(S.write)return;if(S.bgSaving){notice('callMessage','Save poora hone dein, phir Logout karein.','warn');return;}$('addUserForm').reset();persistCallDraft();persistNewDraft();persistEditDraft();const oldToken=S.token;S.epoch++;S.token='';S.session=null;S.lead=null;S.callAttempt=null;S.newAttempt=null;store.remove('crm_token');closeDrawer();resetUpload();$('appShell').hidden=true;$('loginScreen').hidden=false;$('loginPass').value='';notice('loginNotice','Logged out.','info');try{await rpc('logout',[oldToken],true)}catch{notice('loginNotice','Signed out of this tab. Server logout could not be confirmed.','warn');}}
+  $('discardEditConflictBtn').addEventListener('click',()=>{if(S.write||S.editAttempt)return;showEditConflict(null);persistEditDraft();notice('editMessage','Latest details retained. You can edit and save now.','info');});
+  $('nMode').addEventListener('change',()=>{updateNewMode();persistNewDraft();});$('nResponse').addEventListener('change',()=>{updateNewMode();persistNewDraft();});
+  $('callEditBtn').addEventListener('click',()=>{if(S.lead)startEdit(S.lead);});
+
+  let visitData=[],visitEditing=null,visitAttempt=null;
+  function mountVisits(page){const compact=page!=='owner';['visitTotalsHeading','visitTotals','visitUpcomingHeading','visitUpcomingKpis','visitUpcomingDates','visitRangeHeading','visitRangeKpis','visitStats','visitTeam'].forEach(id=>$(id).hidden=compact);const parent=page==='owner'?$('page-owner'):$('myVisitSlot');if($('visitPanel').parentNode!==parent){if(page==='owner')parent.insertBefore($('visitPanel'),$('ownerLive'));else parent.appendChild($('visitPanel'));}}
+  async function loadVisits(provided=null){
+    const epoch=S.epoch,n=nextSeq('visits');
+    const today=toISTInput(new Date().toISOString()).slice(0,10);
+    if(!$('visitFrom').value)$('visitFrom').value=today;if(!$('visitTo').value)$('visitTo').value=today;
+    try{const d=await (provided||rpc('getVisitDashboard',[$('visitFrom').value,$('visitTo').value]));if(!current('visits',n,epoch))return;if(d?.loadError)throw Error(d.loadError);visitData=d.items;const c=d.counts;
+      $('visitKpis').innerHTML=visitCard('📅','Today scheduled',c.scheduled,'today:scheduled')+visitCard('✅','Of these, arrived',c.arrived,'today:arrived')+visitCard('🕒','Still to arrive today',c.remaining,'today:remaining')+visitCard('🏬','All arrivals today',c.doneToday,'today:allArrivals')+visitCard('⚠','Overdue visits',c.overdue,'today:overdue');
+      renderVisits(d.today);notice('visitMessage','');
+    }catch(e){if(current('visits',n,epoch))report('visitMessage',e);}
+  }
+
+  function visitCard(icon,label,count,filter){return '<button type="button" class="kpi queueKpi" data-visit-card="'+esc(filter)+'" aria-pressed="false" aria-label="'+esc(label)+': '+esc(count)+' — view details"><div class="icon" aria-hidden="true">'+icon+'</div><strong>'+esc(count)+'</strong><span>'+esc(label)+'</span><small>View customer details →</small></button>';}
+  function visitPeriods(today){
+    const day=new Date(today+'T00:00:00Z'),tuesday=new Date(day);tuesday.setUTCDate(day.getUTCDate()+(day.getUTCDay()===1?1:-((day.getUTCDay()+5)%7)));
+    const key=d=>d.toISOString().slice(0,10),plus=(d,n)=>new Date(d.getTime()+n*86400000);
+    return {today:{from:today,to:today},week:{from:today>key(tuesday)?today:key(tuesday),to:key(plus(tuesday,5))},nextWeek:{from:key(plus(tuesday,7)),to:key(plus(tuesday,12))},month:{from:today,to:key(new Date(Date.UTC(day.getUTCFullYear(),day.getUTCMonth()+1,0)))}};
+  }
+  function visitMatches(v,mode,from,to,today){
+    const pending=['Planned','Rescheduled'].includes(v.status),done=['Done','Converted'].includes(v.status),inRange=d=>!!d&&d>=from&&d<=to,actualDay=v.actual?toISTInput(v.actual).slice(0,10):'';
+    if(mode.includes(':')){
+      const [scope,key]=mode.split(':');
+      if(scope==='period'){const range=visitPeriods(today)[key];return !!range&&pending&&!!v.date&&v.date>=range.from&&v.date<=range.to;}
+      if(scope==='today')return key==='scheduled'?v.date===today&&v.status!=='Cancelled':key==='arrived'?v.date===today&&done:key==='remaining'?v.date===today&&pending:key==='allArrivals'?actualDay===today:key==='overdue'?pending&&!!v.date&&v.date<today:false;
+      if(scope!=='alltime'&&scope!=='range')return false;
+      if(scope==='range'&&!inRange(v.date))return false;
+      return key==='scheduled'?true:key==='done'?done:key==='cancelled'?v.status==='Cancelled':key==='converted'?v.status==='Converted':false;
+    }
+    return mode==='datePending'&&!v.date&&pending||mode==='all'||mode==='cancelled'&&v.status==='Cancelled'&&inRange(v.date)||mode==='converted'&&v.status==='Converted'&&inRange(v.date)||mode==='today'&&v.date===today&&v.status!=='Cancelled'||mode==='upcoming'&&pending&&v.date>today||mode==='overdue'&&pending&&!!v.date&&v.date<today||mode==='range'&&(inRange(v.date)||inRange(actualDay));
+  }
+  document.addEventListener('click',e=>{
+    const card=e.target.closest('[data-visit-card]');if(!card||S.write)return;
+    const filter=card.dataset.visitCard,select=$('visitView');
+    let option=Array.from(select.options).find(o=>o.value===filter);
+    if(!option){option=document.createElement('option');option.value=filter;const scope=filter.split(':')[0];option.textContent=(scope==='alltime'?'All-time — ':scope==='range'?'Selected dates — ':scope==='period'?'Upcoming — ':'Today — ')+card.querySelector('span').textContent;select.appendChild(option);}
+    select.value=filter;renderVisits();$('visitListTitle').scrollIntoView({behavior:'smooth',block:'start'});$('visitListTitle').focus({preventScroll:true});
+  });
+
+  function renderVisits(today=toISTInput(new Date().toISOString()).slice(0,10)){
+    const from=$('visitFrom').value,to=$('visitTo').value,mode=$('visitView').value,pending=v=>['Planned','Rescheduled'].includes(v.status),inRange=d=>d&&d>=from&&d<=to;
+    const rows=visitData.filter(v=>visitMatches(v,mode,from,to,today));
+    const periods=visitPeriods(today),periodLabels={today:'Today',week:'This Week',nextWeek:'Next Week',month:'This Month'};
+    $('visitUpcomingKpis').innerHTML=Object.keys(periods).map(key=>visitCard('📅',periodLabels[key],visitData.filter(v=>visitMatches(v,'period:'+key,from,to,today)).length,'period:'+key)).join('');
+    $('visitUpcomingDates').textContent=Object.keys(periods).map(key=>periodLabels[key]+': '+reportDateLabel(periods[key].from)+' – '+reportDateLabel(periods[key].to)).join(' | ')+' · Week: Tuesday–Sunday (Monday off). Aaj se aage ki Planned / Rescheduled visits only. Done, Cancelled aur Date pending excluded. Week aur month counts overlap kar sakte hain.';
+    const scheduled=visitData.filter(v=>inRange(v.date));
+    const totals=list=>({scheduled:list.length,cancelled:list.filter(v=>v.status==='Cancelled').length,converted:list.filter(v=>v.status==='Converted').length,done:list.filter(v=>['Done','Converted'].includes(v.status)).length});
+    const cards=(t,scope)=>visitCard('📅','Total scheduled',t.scheduled,scope+':scheduled')+visitCard('✅','Visits done (including converted)',t.done,scope+':done')+visitCard('❌','Cancelled',t.cancelled,scope+':cancelled')+visitCard('🛍','Converted — maal liya',t.converted,scope+':converted');
+    $('visitTotals').innerHTML=cards(totals(visitData),'alltime');$('visitRangeKpis').innerHTML=cards(totals(scheduled),'range');
+    $('visitStats').textContent='Range groups visits by scheduled visit date and shows their current outcome. Total scheduled includes cancelled and completed visits. Converted also counts as Visit Done. Repeat visits count separately. List: '+rows.length+' visits. Date pending: '+visitData.filter(v=>!v.date&&pending(v)).length+' (included in all-time total; excluded from date-range and today counts).';
+    const crms=[...new Set(scheduled.map(v=>v.crm))];
+    $('visitTeam').innerHTML='<div class="tablewrap"><table><thead><tr><th>CRM — selected dates</th><th>Total scheduled</th><th>Done</th><th>Cancelled</th><th>Converted</th></tr></thead><tbody>'+crms.map(c=>{const t=totals(scheduled.filter(v=>v.crm===c));return '<tr><td>'+esc(c)+'</td><td>'+t.scheduled+'</td><td>'+t.done+'</td><td>'+t.cancelled+'</td><td>'+t.converted+'</td></tr>';}).join('')+'</tbody></table></div>';
+    const chosen=$('visitView').selectedOptions[0];$('visitListTitle').textContent=(chosen?chosen.textContent:'Visit details')+(mode.startsWith('period:')&&periods[mode.split(':')[1]]?' ('+reportDateLabel(periods[mode.split(':')[1]].from)+' – '+reportDateLabel(periods[mode.split(':')[1]].to)+')':'')+' — '+rows.length+' visits';
+    document.querySelectorAll('[data-visit-card]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.visitCard===mode)));
+    $('visitRows').innerHTML=rows.map(v=>'<tr><td><button class="linkbutton" data-profile="'+esc(v.leadId)+'">'+esc(v.name||'Name not available')+'</button></td><td>'+crmPhoneQrMarkup(v.mobile,v.name)+' / '+esc(v.crm)+'</td><td>'+esc(v.date?reportDateLabel(v.date):'Date pending')+'</td><td>'+esc(v.status)+'</td><td>'+esc(v.actualDisplay)+'</td><td>'+esc(v.convertedDisplay||'—')+'</td><td>'+esc(v.note||'—')+'</td><td>'+(pending(v)||v.status==='Done'?'<button class="btn" data-visit="'+esc(v.id)+'">Update / Maal liya</button>':'')+'</td></tr>').join('')||'<tr><td colspan="8">No visits in this view.</td></tr>';
+  }
+  function openVisitForm(lead,visit=null){
+    if(S.write)return;if(visitAttempt){notice('visitMessage','Retry the pending visit save first.','warn');return;}
+    navigate(S.session.role==='Owner'?'owner':'visits');
+    visitEditing={leadId:lead.id,visitId:visit?.legacy?'':visit?.id||'',version:visit?.version||0};
+    $('visitCustomer').textContent=(visit?'Update visit: ':'New visit: ')+(lead.name||lead.mobile);
+    $('vDate').value=visit?.date||'';$('vStatus').value=visit?.status==='Done'?'Converted':visit?.status||'Planned';$('vDate').disabled=visit?.status==='Done';$('vNote').value=visit?.note||'';$('visitForm').hidden=false;$('visitForm').scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  async function saveVisit(event){
+    event.preventDefault();if(S.write||!visitEditing)return;
+    if(!visitAttempt)visitAttempt={id:uid(),payload:{...visitEditing,date:$('vDate').value,status:$('vStatus').value,note:$('vNote').value}};
+    const epoch=S.epoch;busy(true);$('visitFields').disabled=true;$('visitSave').disabled=true;$('visitCancel').disabled=true;
+    try{const r=await rpc('saveCustomerVisit',[visitAttempt.payload,visitAttempt.id]);if(epoch!==S.epoch)return;if(!r?.success)throw Error('Visit save not confirmed. Retry.');visitAttempt=null;visitEditing=null;$('visitForm').hidden=true;await loadVisits();notice('visitMessage','Visit saved.','ok');if(S.page==='calls'&&S.lead){const p=await rpc('getCustomerProfile',[S.lead.id]);renderLead(p.lead);}}
+    catch(e){if(epoch===S.epoch){if(/^(Enter the confirmed|Planned visit date|Visit changed|Visit not found|This visit is finished|This customer already|Create a planned|Visit date must)/.test(messageOf(e))){visitAttempt=null;$('visitFields').disabled=false;}report('visitMessage',e);}}
+    finally{busy(false);$('visitSave').disabled=false;$('visitCancel').disabled=!!visitAttempt;$('visitFields').disabled=!!visitAttempt;$('visitSave').textContent=visitAttempt?'Retry same visit save':'Save visit';}
+  }
+  $('visitForm').addEventListener('submit',saveVisit);$('visitRefresh').addEventListener('click',()=>{if(!S.write)fresh(()=>loadVisits());});$('visitView').addEventListener('change',()=>renderVisits());
+  $('visitCancel').addEventListener('click',()=>{if(!visitAttempt){visitEditing=null;$('visitForm').hidden=true;}});
+  $('callVisitBtn').addEventListener('click',()=>{if(S.lead)openVisitForm(S.lead);});
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-visit]');if(!b||S.write)return;const v=visitData.find(v=>v.id===b.dataset.visit);if(v)openVisitForm({id:v.leadId,name:v.name,mobile:v.mobile},v);});
+  setInterval(()=>{if(S.session&&!S.write&&!document.hidden&&['owner','visits'].includes(S.page))fresh(()=>loadVisits());},60000);
+
+  // Dependency-free XLSX: inline text cells prevent spreadsheet formula execution.
+  function crmExcelFile(sheets){
+    const enc=new TextEncoder(),files=[],xml=v=>String(v??'').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const add=(name,body)=>files.push({name:enc.encode(name),data:enc.encode(body)}),ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    const col=n=>{let s='';for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;};
+    sheets.forEach((s,i)=>{if(s.rows.length>1048576)throw Error('Report exceeds Excel row limit. Select a shorter date range.');const width=Math.max(1,...s.rows.slice(0,10).map(r=>r.length));
+      add('xl/worksheets/sheet'+(i+1)+'.xml','<worksheet xmlns="'+ns+'"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+Array.from({length:width},(_,j)=>'<col min="'+(j+1)+'" max="'+(j+1)+'" width="'+(j===0?27:24)+'" customWidth="1"/>').join('')+'</cols><sheetData>'+s.rows.map((r,n)=>'<row r="'+(n+1)+'">'+r.map((v,j)=>{const ref=col(j)+(n+1),style=n===0?' s="1"':'';return typeof v==='number'&&Number.isFinite(v)?'<c r="'+ref+'"'+style+'><v>'+v+'</v></c>':'<c r="'+ref+'" t="inlineStr"'+style+'><is><t xml:space="preserve">'+xml(v)+'</t></is></c>';}).join('')+'</row>').join('')+'</sheetData><autoFilter ref="A1:'+col(width-1)+Math.max(1,s.rows.length)+'"/></worksheet>');
+    });
+    add('xl/styles.xml','<styleSheet xmlns="'+ns+'"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
+    add('xl/workbook.xml','<workbook xmlns="'+ns+'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map((s,i)=>'<sheet name="'+xml(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>');
+    add('xl/_rels/workbook.xml.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'<Relationship Id="styles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+    add('_rels/.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+    add('[Content_Types].xml','<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'</Types>');
+    const crc=data=>{let n=0xffffffff;for(const b of data){n^=b;for(let k=0;k<8;k++)n=(n>>>1)^((n&1)?0xedb88320:0);}return (n^0xffffffff)>>>0;},chunks=[],central=[];let offset=0;
+    for(const f of files){const sum=crc(f.data),h=new Uint8Array(30+f.name.length),v=new DataView(h.buffer);v.setUint32(0,0x04034b50,true);v.setUint16(4,20,true);v.setUint16(6,0x800,true);v.setUint32(14,sum,true);v.setUint32(18,f.data.length,true);v.setUint32(22,f.data.length,true);v.setUint16(26,f.name.length,true);h.set(f.name,30);chunks.push(h,f.data);
+      const c=new Uint8Array(46+f.name.length),w=new DataView(c.buffer);w.setUint32(0,0x02014b50,true);w.setUint16(4,20,true);w.setUint16(6,20,true);w.setUint16(8,0x800,true);w.setUint32(16,sum,true);w.setUint32(20,f.data.length,true);w.setUint32(24,f.data.length,true);w.setUint16(28,f.name.length,true);w.setUint32(42,offset,true);c.set(f.name,46);central.push(c);offset+=h.length+f.data.length;
+    }
+    const size=central.reduce((n,c)=>n+c.length,0),end=new Uint8Array(22),e=new DataView(end.buffer);e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,offset,true);return new Blob([...chunks,...central,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+  function crmExcelSheets(d){
+    const calls=d.calls,v=d.visits,live=d.dashboard,range=v.items.filter(x=>x.date&&x.date>=v.fromDate&&x.date<=v.toDate),sheets=[];
+    const add=(name,rows)=>sheets.push({name,rows}),stat=(name,list)=>[name,list.length,list.filter(x=>['Done','Converted'].includes(x.status)).length,list.filter(x=>x.status==='Cancelled').length,list.filter(x=>x.status==='Converted').length];
+    add('Report Info',[['Setting','Value'],['Generated at (IST)',d.generatedAt],['Call dates',reportDateLabel(calls.fromDate)+' to '+reportDateLabel(calls.toDate)],['Visit dates',reportDateLabel(v.fromDate)+' to '+reportDateLabel(v.toDate)],['Scope','All call rows for selected dates; all current customers and visits. Screen search and pagination do not limit export.'],['Visit totals','Repeated visits count separately; historical scheduled customers without a visit record appear once.'],['Date pending','Included in all-time totals; excluded from dated reports.'],['Converted','Customer purchased goods; also counted as Visit Done.'],['Week','Tuesday to Sunday'],['Times','India time; displayed as dd-mmm-yy'],...Object.entries(calls.warnings||{}).map(([k,n])=>['Data check: '+k,n])]);
+    add('Dashboard Summary',[['Metric','Value'],['Call records (selected dates)',calls.totals.records],['Unique customers (selected dates)',calls.totals.uniqueCustomers],['Not Picked (selected dates)',calls.totals.notPicked],['Other responses (selected dates)',calls.totals.otherResponses],['First call pending',live.kpis.freshPending],['Later today',live.kpis.callbacksDue],['Overdue calls',live.kpis.overdue],['Future follow-ups',live.kpis.upcoming],['Interested',live.kpis.interested],['Customers called today',live.kpis.callsDoneToday],['Legacy review pending',live.legacyPending],['Follow-up missing',live.kpis.unscheduled],['Visits scheduled today',v.counts.scheduled],['Of these arrived',v.counts.arrived],['Still to arrive today',v.counts.remaining],['All arrivals today',v.counts.doneToday],['Overdue visits',v.counts.overdue],...['week','nextWeek','month'].map(k=>[{week:'This week pending visits',nextWeek:'Next week pending visits',month:'This month pending visits'}[k],v.items.filter(x=>visitMatches(x,'period:'+k,'','',v.today)).length])]);
+    add('Call Details',[['Call time (IST)','Customer','Mobile','CRM','Response','Next action','Next follow-up','Note'],...calls.items.map(x=>[x.callDisplay,x.name,String(x.mobile||''),x.crm,x.response,x.nextActionType,x.nextFollowupDisplay,x.note])]);
+    add('Calls by Date',[['Date','Saved calls','Unique customers','Not Picked','Other responses'],...calls.byDay.map(x=>[reportDateLabel(x.date),x.records,x.uniqueCustomers,x.notPicked,x.otherResponses])]);
+    add('Calls by CRM',[['CRM','Saved calls','Unique customers','Not Picked','Other responses'],...calls.byCrm.map(x=>[x.crm,x.records,x.uniqueCustomers,x.notPicked,x.otherResponses])]);
+    add('Visit Summary',[['Scope','Total scheduled','Done incl converted','Cancelled','Converted'],stat('All-time',v.items),stat('Selected visit dates',range)]);
+    const visitRows=list=>[['Customer','Mobile','CRM','Planned date','Status','Actual arrival (IST)','Purchase recorded (IST)','Note'],...list.map(x=>[x.name,String(x.mobile||''),x.crm,x.date?reportDateLabel(x.date):'Date pending',x.status,x.actualDisplay,x.convertedDisplay,x.note])];
+    add('All Visits',visitRows(v.items));add('Visits Selected Dates',visitRows(range));
+    for(const [k,name]of [['week','This Week Visits'],['nextWeek','Next Week Visits'],['month','This Month Visits']])add(name,visitRows(v.items.filter(x=>visitMatches(x,'period:'+k,'','',v.today))));
+    add('Visits by CRM',[['Scope','CRM','Total scheduled','Done incl converted','Cancelled','Converted'],...['All-time','Selected visit dates'].flatMap(scope=>{const list=scope==='All-time'?v.items:range;return [...new Set(list.map(x=>x.crm))].sort().map(crm=>[scope,...stat(crm,list.filter(x=>x.crm===crm))]);})]);
+    add('Live Customers',[['Customer','Mobile','City','CRM','Priority','Response','Last call','Next action','Next follow-up','Note'],...live.queue.map(x=>[x.name,String(x.mobile||''),x.city,x.crm,x.score,x.disposition,x.lastCallDisplay,x.nextActionType,x.nextFollowupDisplay,x.note])]);
+    add('Live CRM Performance',[['CRM','First call pending','Later today','Overdue','Customers called today'],...live.team.map(crm=>{const x=live.perf[crm]||{};return [crm,x.fresh||0,x.due||0,x.overdue||0,x.done||0];})]);return sheets;
+  }
+  let excelBusy=false;
+  $('generateExcel').addEventListener('click',async()=>{
+    if(excelBusy||S.write||S.session?.role!=='Owner')return;
+    const from=$('reportFrom').value,to=$('reportTo').value,today=toISTInput(new Date().toISOString()).slice(0,10),vf=$('visitFrom').value||today,vt=$('visitTo').value||today;
+    if(!from||!to||from>to||vf>vt){notice('excelMessage','Valid call and visit date ranges select karein.','err');return;}
+    excelBusy=true;$('generateExcel').disabled=true;const epoch=S.epoch;notice('excelMessage','Generating complete Excel report…','info');
+    try{const data=await rpc('getDashboardExcelData',[from,to,vf,vt]);if(epoch!==S.epoch)return;
+      const blob=crmExcelFile(crmExcelSheets(data)),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Smart_CRM_'+from+'_to_'+to+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);notice('excelMessage','Excel download started — '+data.calls.items.length+' call records, '+data.visits.items.length+' visits, '+data.dashboard.queue.length+' customers.','ok');
+    }catch(e){if(epoch===S.epoch)report('excelMessage',e);}finally{excelBusy=false;$('generateExcel').disabled=false;}
+  });
+
+  $('existingCallBtn').addEventListener('click',()=>{if(S.duplicate?.lead&&!S.write)navigate('calls',S.duplicate.lead);});
+  $('existingEditBtn').addEventListener('click',()=>{if(S.duplicate?.lead&&!S.write)startEdit(S.duplicate.lead);});
+  $('editForm').addEventListener('submit',saveEdit);$('editForm').addEventListener('input',persistEditDraft);$('eCrm').addEventListener('change',persistEditDraft);
+  $('retryEditBtn').addEventListener('click',sendEditAttempt);$('leaveEditBtn').addEventListener('click',()=>navigate('search'));
+  $('restoreEditBtn').addEventListener('click',()=>{if(S.write||S.editAttempt||!S.editConflict)return;const draft=S.editConflict;showEditConflict(null);fillEditDraft(draft);persistEditDraft();notice('editMessage','Earlier changes restored. Check every field, then Save Changes.','warn');});
+  $('loginForm').addEventListener('submit',login);$('logoutBtn').addEventListener('click',logout);
+  document.addEventListener('click',event=>{const bucket=event.target.closest('[data-queue-bucket]');if(bucket){openQueueDetails(bucket.dataset.queueBucket);return}const nav=event.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}const profile=event.target.closest('[data-profile]');if(profile){openDrawer(profile.dataset.profile);return}const response=event.target.closest('[data-response]');if(response&&!S.write&&(!S.callAttempt||S.bgSaving)){selectResponse(response.dataset.response);return}const resolve=event.target.closest('[data-resolve]');if(resolve){resolveLegacy(resolve.dataset.record,resolve.dataset.resolve);return}if(event.target.closest('[data-keep]'))notice('legacyMessage','Record kept in the review queue.','info');});
+  $('bgSaveClose').addEventListener('click',hideBgProblem);
+  $('bgSaveOpen').addEventListener('click',async()=>{
+    const p=S.bgProblem;if(!p||S.write||S.bgSaving)return;const epoch=S.epoch;persistCallDraft();
+    try{
+      const lead=p.latest||(await fresh(()=>rpc('getCustomerProfile',[p.leadId]))).lead;if(epoch!==S.epoch)return;hideBgProblem();
+      if(S.page!=='calls')navigate('calls',lead);else{renderLead(lead,{restore:p.kind!=='conflict'});}
+      if(p.kind==='conflict'){showConflictDraft(p.draft);notice('callMessage','Latest details dikh rahi hain. Check karke response dobara chunein ya apni pichli entry wapas laayein.','warn');}
+      else notice('callMessage','Apni entry check karke dobara Save karein.','warn');
+    }catch(e){report('callMessage',e);}
+  });
+  $('callForm').addEventListener('submit',saveCall);$('newForm').addEventListener('submit',saveNew);$('retryCallBtn').addEventListener('click',sendCallAttempt);$('retryNewBtn').addEventListener('click',sendNewAttempt);
+  ['nextAction','nextDate','callNote','callVisitDate'].forEach(id=>$(id).addEventListener('input',persistCallDraft));$('newForm').addEventListener('input',persistNewDraft);$('nCrm').addEventListener('change',persistNewDraft);$('nMobile').addEventListener('input',checkDuplicate);
+  $('restoreCallDraft').addEventListener('click',()=>{if(!S.conflict||S.write||(S.callAttempt&&!S.bgSaving))return;const d=S.conflict;showConflictDraft(null);applyCallDraft(d);notice('callMessage','Earlier response restored. Latest customer details aur follow-up check karke Save karein.','warn');});
+  $('callReportFilter').addEventListener('submit',e=>{e.preventDefault();loadCallReport(0);});
+  [['reportToday','today'],['reportYesterday','yesterday'],['reportWeek','week'],['reportMonth','month']].forEach(([id,kind])=>$(id).addEventListener('click',()=>setReportPreset(kind)));
+  ['reportFrom','reportTo'].forEach(id=>$(id).addEventListener('input',reportDatesChanged));
+  $('reportPrev').addEventListener('click',()=>{if(!S.reportLoading&&S.reportApplied)loadCallReport(Math.max(0,S.reportOffset-50));});
+  $('reportNext').addEventListener('click',()=>{if(!S.reportLoading&&S.reportApplied&&S.reportHasMore)loadCallReport(S.reportOffset+50);});
+  $('ownerLive').addEventListener('toggle',()=>{if($('ownerLive').open&&S.page==='owner'&&S.session?.role==='Owner')loadOwner();});
+  $('callsRefresh').addEventListener('click',()=>{persistCallDraft();fresh(()=>loadCalls())});$('ownerRefresh').addEventListener('click',()=>fresh(()=>loadOwnerView()));$('legacyRefresh').addEventListener('click',()=>fresh(()=>loadLegacy()));
+  $('callHistoryBtn').addEventListener('click',()=>{if(S.lead)openDrawer(S.lead.id)});$('dialLink').addEventListener('click',()=>{$('dialNotice').hidden=false;});
+  $('ownerSearch').addEventListener('input',()=>{nextSeq('owner');clearTimeout(S.ownerTimer);S.ownerTimer=setTimeout(loadOwner,300);});$('globalSearch').addEventListener('input',()=>{nextSeq('search');clearTimeout(S.searchTimer);$('searchResults').innerHTML='';S.searchTimer=setTimeout(searchCustomers,300);});
+  $('downloadBulkTemplateBtn').addEventListener('click',()=>{
+    const csv='\uFEFFCustomer Name,Mobile,Response,Call Date\r\n';
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download='Smart_CRM_Bulk_Upload_Template.csv';
+    document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  });
+  $('fileInput').addEventListener('change',analyzeFile);$('cancelUploadBtn').addEventListener('click',()=>{resetUpload();notice('uploadMessage','Preview closed. Already archived source rows are preserved.','info');});$('approveUploadBtn').addEventListener('click',approveUpload);
+  $('legacyPrev').addEventListener('click',()=>{if(S.write)return;S.legacyOffset=Math.max(0,S.legacyOffset-pageSize);loadLegacy();});$('legacyNext').addEventListener('click',()=>{if(S.write)return;S.legacyOffset+=pageSize;loadLegacy();});
+  $('queueRefresh').addEventListener('click',()=>fresh(()=>openQueueDetails(S.queueBucket,S.queueOffset)));
+  $('queuePrev').addEventListener('click',()=>{if(!S.detailsLoading)openQueueDetails(S.queueBucket,Math.max(0,S.queueOffset-25));});
+  $('queueNext').addEventListener('click',()=>{if(!S.detailsLoading&&S.queueHasMore)openQueueDetails(S.queueBucket,S.queueOffset+25);});
+  $('drawerClose').addEventListener('click',closeDrawer);$('overlay').addEventListener('click',closeDrawer);document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDrawer();});
+  window.addEventListener('beforeunload',event=>{persistCallDraft();persistNewDraft();persistEditDraft();if(S.write||S.bgSaving){event.preventDefault();event.returnValue='';}});
+  $('loginLogo').src='data:image/png;base64,'+LOGO_B64;$('navLogo').src='data:image/png;base64,'+LOGO_B64;
+  if(S.token){$('loginBtn').disabled=true;notice('loginNotice','Restoring session…','info');rpc('getBootstrapData').then(boot=>{if(!boot||!boot.role||!boot.username)throw new Error('Please deploy latest backend and login again.');enterApp({username:boot.username,role:boot.role,displayName:boot.displayName,teamMemberName:boot.teamMemberName||''},boot);notice('loginNotice','');}).catch(()=>{store.remove('crm_token');S.token='';notice('loginNotice','Please login again.','info');}).finally(()=>{$('loginBtn').disabled=false;});}
+})();
+</script>
+</body>
+</html>

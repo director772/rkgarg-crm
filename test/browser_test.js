@@ -1,0 +1,67 @@
+// Real index.html in a simulated browser, talking to the local API over HTTP.
+import { JSDOM, VirtualConsole } from 'jsdom';
+import { startServer } from './server.js';
+import { sha256Hex } from '../src/util.js';
+const real = process.env.BASE;
+const { srv, env, port } = real ? { srv: { close() {} }, env: { SYNC_KEY: 'test-sync-key-1234567890' } } : await startServer();
+const base = real || 'http://127.0.0.1:' + port;
+let ok = 0, bad = 0; const check = (c, m) => { if (c) { ok++; console.log('ok -', m); } else { bad++; console.log('FAIL -', m); } };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const sync = async b => (await (await fetch(base + '/api/sync', { method: 'POST', body: JSON.stringify(Object.assign({ key: env.SYNC_KEY }, b)) })).json()).result;
+if (real) for (const t of ['Leads', 'CallLog', 'Users', 'Team', 'CRM Visits', 'LegacyReview', 'LegacyImportBatches', 'LegacyImportRows', 'AuditLog']) await sync({ op: 'reset', table: t });
+// seed like the first-time copy from the Sheet
+const s = 'abc';
+await sync({ op: 'append', table: 'Users', headers: ['Username', 'PasswordHash', 'Salt', 'DisplayName', 'Role', 'TeamMemberName', 'Active'], rows: [['owner', await sha256Hex('pass1234', s), s, 'Owner', 'Owner', '', true], ['neha', await sha256Hex('pass1234', s), s, 'Neha', 'CRM', 'Neha', true]] });
+await sync({ op: 'append', table: 'Team', headers: ['Name', 'Active'], rows: [['Neha', true]] });
+const H = ['ID', 'Name', 'Mobile', 'City', 'Source', 'Product', 'CRM', 'Status', 'Disposition', 'Score', 'CreatedAt', 'RowVersion'];
+await sync({ op: 'append', table: 'Leads', headers: H, rows: ['Aman', 'Bala', 'Chirag', 'Deepak'].map((n, i) => ['L' + i, n + ' Traders', '981000000' + i, 'Delhi', 'WhatsApp', 'Jeans', 'Neha', 'fresh', 'Yet To Call', 8 - i * 0, new Date(Date.UTC(2026, 9, 1 + i)).toISOString(), 1]) });
+await sync({ op: 'append', table: 'LegacyReview', headers: ['ID', 'Name', 'Mobile', 'RowsFound', 'LastKnownDisposition', 'LastKnownDate', 'Details', 'Status'], rows: [['LEG-1', 'Sonu Mittal', '7456997801', 1, 'Not responding', '', '["CSV row 20"]', 'pending']] });
+
+const errors = []; const vc = new VirtualConsole(); vc.on('jsdomError', e => errors.push(String(e.message || e)));
+const calls = [];
+const dom = await JSDOM.fromURL(base + '/', { runScripts: 'dangerously', pretendToBeVisual: true, virtualConsole: vc, beforeParse(w) {
+  w.fetch = (u, o) => { calls.push(String(u)); return fetch(new URL(u, base), o); };
+  w.HTMLElement.prototype.scrollIntoView = function () {};
+} });
+const w = dom.window, d = w.document, $ = id => d.getElementById(id), ist = ms => new Date(ms + 19800000).toISOString().slice(0, 16);
+const t0 = Date.now();
+$('loginUser').value = 'neha'; $('loginPass').value = 'pass1234'; $('loginForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+for (let i = 0; i < 50 && $('appShell').hidden; i++) await sleep(20);
+await sleep(150);
+check(!$('appShell').hidden, 'login works (' + (Date.now() - t0) + ' ms incl. first screen)');
+check(/Traders/.test($('cName').textContent), 'My Calls shows a customer: ' + $('cName').textContent);
+const first = $('cName').textContent;
+d.querySelector('[data-response="Call Later"]').click(); $('nextDate').value = ist(Date.now() + 86400000);
+const t1 = Date.now(); $('callForm').dispatchEvent(new w.Event('submit', { cancelable: true })); await sleep(5);
+check($('cName').textContent !== first && /Traders/.test($('cName').textContent), 'Save & Next: next customer instantly');
+for (let i = 0; i < 50 && !/save ho gaya/.test($('callMessage').textContent); i++) await sleep(20);
+check(/save ho gaya/.test($('callMessage').textContent), 'background save confirmed in ' + (Date.now() - t1) + ' ms');
+check((await sync({ op: 'status' })).counts.CallLog === 1, 'call stored in database');
+d.querySelector('[data-nav="legacy"]').click(); await sleep(300);
+check(/Sonu Mittal/.test($('legacyCards').textContent), 'Legacy Review list');
+const t2 = Date.now(); d.querySelector('[data-resolve="active"]').click();
+for (let i = 0; i < 100 && $('page-edit').hidden; i++) await sleep(20);
+check(!$('page-edit').hidden && $('eName').value === 'Sonu Mittal', 'CALL NOW opens Edit Lead in ' + (Date.now() - t2) + ' ms');
+$('eCity').value = 'Bulandshahr'; $('eProduct').value = 'Jeans'; $('eResponse').value = 'Interested'; $('eResponse').dispatchEvent(new w.Event('change'));
+$('eFollowup').value = ist(Date.now() + 86400000); $('editForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+for (let i = 0; i < 100 && !/save ho gaye/.test($('editMessage').textContent); i++) await sleep(20);
+check(/save ho gaye/.test($('editMessage').textContent), 'legacy details + call saved');
+d.querySelector('[data-nav="new"]').click(); await sleep(300);
+$('nMode').value = 'pending'; $('nMode').dispatchEvent(new w.Event('change'));
+$('nMobile').value = '9876501234'; $('nName').value = 'Ganesh Cloth'; $('nSource').value = 'Reference'; $('nCrm').value = 'Neha';
+$('newForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+for (let i = 0; i < 100 && !/save ho gayi/.test($('newMessage').textContent); i++) await sleep(20);
+check(/save ho gayi/.test($('newMessage').textContent), 'new lead saved');
+$('nMobile').value = '9876501234'; $('nMobile').dispatchEvent(new w.Event('input')); await sleep(600);
+check(/Existing customer/.test($('dupNotice').textContent), 'duplicate mobile warning while typing');
+// logout + owner
+$('logoutBtn').click(); await sleep(300);
+$('loginUser').value = 'owner'; $('loginPass').value = 'pass1234'; $('loginForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+for (let i = 0; i < 100 && $('callReportContent').hidden; i++) await sleep(20);
+check(!$('callReportContent').hidden && /Saved call records/.test($('reportKpis').textContent), 'Owner Dashboard call report');
+check(/2/.test(d.querySelector('#reportKpis strong').textContent), 'owner sees 2 saved calls today');
+d.querySelector('[data-nav="users"]').click(); await sleep(400);
+check(/neha/.test($('usersRows').textContent), 'Manage Users list');
+check(errors.length === 0, 'no browser errors ' + errors.join(' | '));
+console.log(`\n${ok} ok, ${bad} failed | API calls: ${calls.length}`);
+srv.close(); process.exit(bad ? 1 : 0);

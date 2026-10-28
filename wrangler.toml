@@ -1,0 +1,9 @@
+# Cloudflare Pages settings for Smart CRM.
+name = "rkgarg-crm"
+compatibility_date = "2025-09-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rkgarg-crm-db"
+database_id = "1c084d83-ecff-4883-aa14-13512454a4ef"

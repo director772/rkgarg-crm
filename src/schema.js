@@ -1,0 +1,25 @@
+// Generated from schema.sql — tables are created automatically on first use.
+export const SCHEMA_STATEMENTS = [
+ "CREATE TABLE IF NOT EXISTS Leads (\n  ID TEXT PRIMARY KEY,\n  Name TEXT DEFAULT '',\n  Mobile TEXT NOT NULL,\n  City TEXT DEFAULT '',\n  Source TEXT DEFAULT '',\n  Product TEXT DEFAULT '',\n  CRM TEXT DEFAULT '',\n  Status TEXT DEFAULT '',\n  Disposition TEXT DEFAULT '',\n  Score INTEGER DEFAULT 0,\n  LastCallAt TEXT DEFAULT '',\n  NextActionType TEXT DEFAULT '',\n  NextFollowupAt TEXT DEFAULT '',\n  Note TEXT DEFAULT '',\n  CreatedAt TEXT DEFAULT '',\n  CreatedBy TEXT DEFAULT '',\n  LastUpdatedAt TEXT DEFAULT '',\n  LastUpdatedBy TEXT DEFAULT '',\n  RowVersion INTEGER DEFAULT 1,\n  LastReq TEXT DEFAULT ''\n)",
+ "CREATE UNIQUE INDEX IF NOT EXISTS Leads_Mobile ON Leads(Mobile)",
+ "CREATE INDEX IF NOT EXISTS Leads_CRM ON Leads(CRM)",
+ "CREATE TABLE IF NOT EXISTS CallLog (\n  ID TEXT PRIMARY KEY,\n  LeadID TEXT DEFAULT '',\n  CallDate TEXT DEFAULT '',\n  Response TEXT DEFAULT '',\n  NextActionType TEXT DEFAULT '',\n  NextFollowupAt TEXT DEFAULT '',\n  Note TEXT DEFAULT '',\n  CreatedBy TEXT DEFAULT '',\n  CreatedAt TEXT DEFAULT '',\n  CRM TEXT DEFAULT '',\n  UpdatedAt TEXT DEFAULT '',\n  UpdatedBy TEXT DEFAULT ''\n)",
+ "CREATE INDEX IF NOT EXISTS CallLog_LeadID ON CallLog(LeadID)",
+ "CREATE INDEX IF NOT EXISTS CallLog_CallDate ON CallLog(CallDate)",
+ "CREATE TABLE IF NOT EXISTS Users (\n  Username TEXT PRIMARY KEY,\n  PasswordHash TEXT DEFAULT '',\n  Salt TEXT DEFAULT '',\n  DisplayName TEXT DEFAULT '',\n  Role TEXT DEFAULT '',\n  TeamMemberName TEXT DEFAULT '',\n  Active INTEGER DEFAULT 0\n)",
+ "CREATE TABLE IF NOT EXISTS Team (\n  Name TEXT PRIMARY KEY,\n  Active INTEGER DEFAULT 0\n)",
+ "CREATE TABLE IF NOT EXISTS Visits (\n  ID TEXT PRIMARY KEY,\n  LeadID TEXT DEFAULT '',\n  CRM TEXT DEFAULT '',\n  PlannedDate TEXT DEFAULT '',\n  Status TEXT DEFAULT '',\n  ActualAt TEXT DEFAULT '',\n  Note TEXT DEFAULT '',\n  Version INTEGER DEFAULT 1,\n  UpdatedAt TEXT DEFAULT '',\n  UpdatedBy TEXT DEFAULT ''\n)",
+ "CREATE INDEX IF NOT EXISTS Visits_LeadID ON Visits(LeadID)",
+ "CREATE TABLE IF NOT EXISTS LegacyReview (\n  ID TEXT PRIMARY KEY,\n  Name TEXT DEFAULT '',\n  Mobile TEXT DEFAULT '',\n  RowsFound INTEGER DEFAULT 0,\n  LastKnownDisposition TEXT DEFAULT '',\n  LastKnownDate TEXT DEFAULT '',\n  Details TEXT DEFAULT '',\n  Status TEXT DEFAULT '',\n  ResolvedBy TEXT DEFAULT '',\n  ResolvedAt TEXT DEFAULT '',\n  ImportBatchID TEXT DEFAULT '',\n  ImportSource TEXT DEFAULT ''\n)",
+ "CREATE INDEX IF NOT EXISTS LegacyReview_Mobile ON LegacyReview(Mobile)",
+ "CREATE TABLE IF NOT EXISTS LegacyImportBatches (\n  BatchID TEXT PRIMARY KEY,\n  Fingerprint TEXT DEFAULT '',\n  SourceHash TEXT DEFAULT '',\n  CreatedAt TEXT DEFAULT '',\n  CreatedBy TEXT DEFAULT '',\n  Status TEXT DEFAULT '',\n  HeaderJSON TEXT DEFAULT '',\n  TotalRows INTEGER DEFAULT 0,\n  UniqueMobiles INTEGER DEFAULT 0,\n  InvalidMobiles INTEGER DEFAULT 0,\n  ResultJSON TEXT DEFAULT '',\n  UpdatedAt TEXT DEFAULT ''\n)",
+ "CREATE INDEX IF NOT EXISTS LegacyImportBatches_Fp ON LegacyImportBatches(Fingerprint)",
+ "CREATE TABLE IF NOT EXISTS LegacyImportRows (\n  RecordKey TEXT PRIMARY KEY,\n  BatchID TEXT DEFAULT '',\n  CSVRow INTEGER DEFAULT 0,\n  Mobile TEXT DEFAULT '',\n  Name TEXT DEFAULT '',\n  Disposition TEXT DEFAULT '',\n  SourceDate TEXT DEFAULT '',\n  ValidMobile INTEGER DEFAULT 0,\n  Issue TEXT DEFAULT '',\n  RawJSON TEXT DEFAULT ''\n)",
+ "CREATE INDEX IF NOT EXISTS LegacyImportRows_Batch ON LegacyImportRows(BatchID)",
+ "CREATE TABLE IF NOT EXISTS AuditLog (\n  Seq INTEGER PRIMARY KEY AUTOINCREMENT,\n  Timestamp TEXT DEFAULT '',\n  User TEXT DEFAULT '',\n  Action TEXT DEFAULT '',\n  EntityType TEXT DEFAULT '',\n  EntityID TEXT DEFAULT '',\n  Details TEXT DEFAULT ''\n)",
+ "CREATE TABLE IF NOT EXISTS Requests (\n  RequestID TEXT PRIMARY KEY,\n  Action TEXT DEFAULT '',\n  User TEXT DEFAULT '',\n  Fingerprint TEXT DEFAULT '',\n  Result TEXT DEFAULT '',\n  CreatedAt TEXT DEFAULT ''\n)",
+ "CREATE TABLE IF NOT EXISTS Sessions (\n  Token TEXT PRIMARY KEY,\n  Username TEXT NOT NULL,\n  Fingerprint TEXT NOT NULL,\n  ExpiresAt INTEGER NOT NULL\n)",
+ "CREATE TABLE IF NOT EXISTS LoginAttempts (\n  Key TEXT PRIMARY KEY,\n  Count INTEGER DEFAULT 0,\n  Until INTEGER DEFAULT 0\n)",
+ "CREATE TABLE IF NOT EXISTS SaveGuard (\n  V TEXT NOT NULL\n)",
+ "CREATE TABLE IF NOT EXISTS Meta (\n  Key TEXT PRIMARY KEY,\n  Value TEXT DEFAULT ''\n)"
+];
