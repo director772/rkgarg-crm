@@ -91,5 +91,30 @@ check(held.length > 0 && held.some(id => after.has(id)), 'Neha\'s screen closed 
 const nl = await api('createLead', owner, { mobile: '9000000777', name: 'Fresh Owner Lead', source: 'Walk-in', city: 'Delhi', product: 'Jeans', crm: 'Neha' }, 'req-pool-0005');
 check((await api('getMyQueueDetails', dimpy, 'fresh', 0, 100)).items.some(l => l.id === nl.leadId), 'new lead added by owner for Neha is in everyone\'s "First call pending" list');
 
+// ---- A CRM leaves the job: owner removes access and gives her customers to Dimpy ----
+// Give Neha a pending visit on her follow-up customer.
+await api('saveCustomerVisit', neha, { leadId: 'F1', status: 'Planned', date: new Date(Date.now() + 2 * 86400000 + 19800000).toISOString().slice(0, 10), note: 'shop visit' }, 'req-pool-0006');
+const nehaOpen = sql("SELECT COUNT(*) AS n FROM Leads WHERE CRM='Neha' AND Status<>'closed'")[0].n;
+const listU = await api('adminListUsers', owner);
+check(listU.find(u => u.username === 'neha').openCustomers === nehaOpen && nehaOpen > 0, 'Manage Users shows Neha\'s open customers: ' + nehaOpen);
+check(/chalu customer hain\. Pehle chuno/.test(await apiErr('adminRemoveCrmAccess', owner, 'neha') || ''), 'cannot remove without choosing who gets the customers');
+check(/active CRM/.test(await apiErr('adminRemoveCrmAccess', owner, 'neha', 'Nobody') || ''), 'unknown CRM refused');
+const closedBefore = sql("SELECT COUNT(*) AS n FROM Leads WHERE CRM='Neha' AND Status='closed'")[0].n;
+const callsBefore = sql("SELECT COUNT(*) AS n FROM CallLog WHERE CRM='Neha'")[0].n;
+const rm = await api('adminRemoveCrmAccess', owner, 'neha', 'Dimpy');
+check(rm.success && rm.moved === nehaOpen && rm.visits === 1, 'removed: ' + rm.message);
+check(await apiErr('getMyCallsData', neha) === 'SESSION_EXPIRED', 'Neha logged out at once');
+check(sql("SELECT COUNT(*) AS n FROM Leads WHERE CRM='Neha' AND Status<>'closed'")[0].n === 0, 'no open customer left stuck with Neha');
+check(sql("SELECT CRM, NextFollowupAt FROM Leads WHERE ID='F1'")[0].CRM === 'Dimpy' && sql("SELECT NextFollowupAt FROM Leads WHERE ID='F1'")[0].NextFollowupAt === '2026-10-21T05:00:00.000Z', 'follow-up customer moved to Dimpy, follow-up date unchanged');
+check(sql("SELECT CRM FROM Visits WHERE LeadID='F1'")[0].CRM === 'Dimpy', 'pending visit moved to Dimpy');
+check(sql("SELECT COUNT(*) AS n FROM Leads WHERE CRM='Neha' AND Status='closed'")[0].n === closedBefore, 'closed customers stay as history');
+check(sql("SELECT COUNT(*) AS n FROM CallLog WHERE CRM='Neha'")[0].n === callsBefore, 'old call history still shows Neha\'s name');
+check(sql("SELECT COUNT(*) AS n FROM LeadClaims WHERE CRM='Neha'")[0].n === 0, 'Neha\'s held new customers freed at once');
+const dq = await api('getMyCallsData', dimpy);
+check(dq.queue[0].id === 'F1', 'Dimpy\'s My Calls now shows Neha\'s overdue follow-up first');
+check(!(await api('getBootstrapData', owner)).team.includes('Neha'), 'Neha removed from CRM list');
+const again = await api('adminRemoveCrmAccess', owner, 'neha', 'Dimpy');
+check(again.success && again.moved === 0, 'pressing again is safe (nothing moves twice)');
+
 console.log(`\n${ok} ok, ${bad} failed | DB queries: ${env.DB.queries}, transactions: ${env.DB.batches}`);
 process.exit(bad ? 1 : 0);

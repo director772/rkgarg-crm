@@ -62,6 +62,18 @@ check(!$('callReportContent').hidden && /Saved call records/.test($('reportKpis'
 check(/2/.test(d.querySelector('#reportKpis strong').textContent), 'owner sees 2 saved calls today');
 d.querySelector('[data-nav="users"]').click(); await sleep(400);
 check(/neha/.test($('usersRows').textContent), 'Manage Users list');
+// Remove Access with customer hand-over
+$('userName').value = 'Bhawna B'; $('userLogin').value = 'bhawna'; $('userPassword').value = 'abcdefgh'; $('userPasswordConfirm').value = 'abcdefgh';
+$('addUserForm').dispatchEvent(new w.Event('submit', { cancelable: true }));
+for (let i = 0; i < 100 && !/bhawna/.test($('usersRows').textContent); i++) await sleep(20);
+d.querySelector('[data-remove-user="neha"]').click();
+check(!$('removeBox').hidden && /chalu customer/.test($('removeText').textContent) && /Bhawna B/.test($('removeTo').innerHTML), 'Remove Access asks who gets Neha\'s customers');
+$('removeConfirm').click(); await sleep(50);
+check(/Pehle chuno/.test($('usersMessage').textContent), 'must pick a CRM first');
+$('removeTo').value = 'Bhawna B'; $('removeConfirm').click();
+for (let i = 0; i < 100 && !/ab Bhawna B ke paas/.test($('usersMessage').textContent); i++) await sleep(20);
+check(/ab Bhawna B ke paas/.test($('usersMessage').textContent) && $('removeBox').hidden, 'access removed + customers moved: ' + $('usersMessage').textContent);
+check(/Access removed/.test($('usersRows').textContent), 'list shows Neha as removed');
 check(errors.length === 0, 'no browser errors ' + errors.join(' | '));
 console.log(`\n${ok} ok, ${bad} failed | API calls: ${calls.length}`);
 srv.close(); process.exit(bad ? 1 : 0);

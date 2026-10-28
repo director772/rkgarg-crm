@@ -67,6 +67,12 @@ Kuch nahi karna — app pehli baar chalte hi tables khud bana leta hai (`schema.
 - Jo CRM pehli call save karta hai, customer **usi ka** ho jaata hai (CRM column badal jaata hai), follow-up bhi wahi karega
 - Jo customer kisi ki screen pe khula hai wo 15 minute tak usi ke liye rukta hai, taaki 2 log ek hi customer ko phone na karein
 
+## Koi CRM job chhod de
+- Owner → **Manage Users** → us CRM ki line mein **Remove Access**
+- Chuno ki uske chalu customer kis CRM ko dene hain → confirm
+- Login turant band, chalu customer + pending visits naye CRM ko (follow-up date wahi), purani call history uske naam se safe
+- Pehle se hataye CRM ke customer atke hon toh unki line mein **Customers doosre CRM ko do**
+
 ## Sheet ke niyam (sync chalu hone ke baad)
 - Leads, CallLog, Users, Team, CRM Visits, LegacyReview mein cell badlo → kuch second mein app mein
 - Leads mein neeche nayi row (Mobile + naam) → app mein naya customer, ID apne aap

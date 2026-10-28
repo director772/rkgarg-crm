@@ -148,8 +148,9 @@
     <div><label for="userPassword">Password *</label><input id="userPassword" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></div>
     <div><label for="userPasswordConfirm">Confirm password *</label><input id="userPasswordConfirm" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></div>
     </div><p class="help">Minimum 8 characters. Employee name se CRM assignment bhi banega. Password sirf login ke liye hai.</p><button type="submit" class="primary">ADD USER</button></fieldset></form>
-    <hr class="divider"><h3>Users &amp; Access</h3><p class="help">Remove Access se login band hoga. Purane customers aur call history safe rahenge. Pending customers ko Edit Lead se doosre CRM ko assign karein.</p>
-    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Login ID</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody id="usersRows"></tbody></table></div>
+    <hr class="divider"><h3>Users &amp; Access</h3><p class="help">Remove Access se login turant band hoga. Us CRM ke chalu customer aap jis CRM ko chunoge, usko mil jaayenge (follow-up date wahi rahegi). Purani call history safe rahegi.</p>
+    <div class="tablewrap"><table><thead><tr><th>Name</th><th>Login ID</th><th>Role</th><th>Status</th><th>Chalu customers</th><th>Action</th></tr></thead><tbody id="usersRows"></tbody></table></div>
+    <div id="removeBox" class="notice warn" hidden><strong id="removeTitle"></strong><p id="removeText" class="help"></p><div id="removePickWrap"><label for="removeTo">Customer kisko dene hain? *</label><select id="removeTo"></select></div><div class="actions" style="margin-top:10px"><button type="button" class="primary" id="removeConfirm"></button><button type="button" class="btn" id="removeCancel">Cancel</button></div></div>
   </div></section>
   <section id="page-search" class="page center" hidden><div class="panel"><h1>Search Customer</h1><p class="sub">Customer name ya mobile number se search karein</p><label for="globalSearch" class="sr">Customer search</label><input id="globalSearch" maxlength="200" placeholder="Name or mobile..."><div id="searchInfo" class="help" role="status"></div><div id="searchResults"></div></div></section>
   <div id="overlay" class="overlay" hidden></div><aside id="drawer" class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" hidden><div class="head"><h2 id="drawerTitle">Customer details</h2><button id="drawerClose" class="btn" aria-label="Close customer details">✕</button></div><div id="drawerContent"></div></aside>
@@ -727,7 +728,8 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     if(S.session?.role!=='Owner')return;const epoch=S.epoch,n=nextSeq('users');
     $('usersRefresh').disabled=true;
     try{const users=await rpc('adminListUsers');if(!current('users',n,epoch))return;
-      $('usersRows').innerHTML=users.map(u=>'<tr><td>'+esc(u.displayName)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td>'+(u.active?'Active':'Access removed')+'</td><td>'+(u.role==='CRM'&&u.active?'<button type="button" class="btn" data-remove-user="'+esc(u.username)+'">Remove Access</button>':u.role==='Owner'?'Owner account':'—')+'</td></tr>').join('');
+      S.users=users;
+      $('usersRows').innerHTML=users.map(u=>'<tr><td>'+esc(u.displayName)+'</td><td>'+esc(u.username)+'</td><td>'+esc(u.role)+'</td><td>'+(u.active?'Active':'Access removed')+'</td><td>'+esc(u.openCustomers||0)+'</td><td>'+(u.role==='CRM'&&u.active?'<button type="button" class="btn" data-remove-user="'+esc(u.username)+'">Remove Access</button>':u.role==='CRM'&&u.openCustomers>0?'<button type="button" class="btn" data-remove-user="'+esc(u.username)+'">Customers doosre CRM ko do</button>':u.role==='Owner'?'Owner account':'—')+'</td></tr>').join('');
     }catch(e){if(current('users',n,epoch))report('usersMessage',e);}finally{if(current('users',n,epoch))$('usersRefresh').disabled=S.write;}
   }
   async function addCrmUser(event){
@@ -739,17 +741,32 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     catch(e){if(epoch===S.epoch)report('usersMessage',e);}
     finally{payload.password='';if(epoch===S.epoch){busy(false);$('userFields').disabled=false;$('usersRefresh').disabled=false;}}
   }
-  async function removeCrmAccess(username){
-    if(S.write)return;
-    if(!confirm('Remove login access for '+username+'? Customer records and call history will remain.'))return;
-    const epoch=S.epoch;busy(true);$('userFields').disabled=true;$('usersRefresh').disabled=true;
-    try{const result=await rpc('adminRemoveCrmAccess',[username]);if(epoch!==S.epoch)return;if(!result?.success)throw Error('Access removal not confirmed. Refresh and retry.');S.teamAt=0;notice('usersMessage',result.message,'ok');await loadUsers();}
+  // Remove Access: owner picks who gets this CRM's open customers, then confirms.
+  function openRemoveBox(username){
+    if(S.write)return;const u=(S.users||[]).find(x=>x.username===username);if(!u)return;
+    const others=[...new Set((S.users||[]).filter(x=>x.active&&x.teamMemberName&&x.teamMemberName!==u.teamMemberName).map(x=>x.teamMemberName))];
+    const open=Number(u.openCustomers)||0;S.removeUser=u.username;
+    $('removeTitle').textContent=u.active?u.displayName+' ka access hatana hai?':u.displayName+' ke customers doosre CRM ko dene hain?';
+    $('removeText').textContent=(u.active?'Login turant band ho jaayega. ':'')+(open?'Iske '+open+' chalu customer hain. Neeche chuno ki ye kisko milenge — follow-up date wahi rahegi, pending visit bhi saath jaayegi.':'Iske paas koi chalu customer nahi hai.');
+    $('removePickWrap').hidden=!open;
+    $('removeTo').innerHTML='<option value="">— CRM chuno —</option>'+others.map(n=>'<option>'+esc(n)+'</option>').join('');
+    $('removeConfirm').textContent=u.active?(open?'Access hatao + customers do':'Haan, access hatao'):'Customers do';
+    $('removeBox').hidden=false;notice('usersMessage','');$('removeBox').scrollIntoView({block:'nearest'});
+  }
+  function closeRemoveBox(){S.removeUser=null;$('removeBox').hidden=true;}
+  async function removeCrmAccess(){
+    if(S.write||!S.removeUser)return;const username=S.removeUser,u=(S.users||[]).find(x=>x.username===username)||{};
+    const to=$('removeTo').value;
+    if(Number(u.openCustomers)>0&&!to){notice('usersMessage','Pehle chuno ki customer kis CRM ko dene hain.','warn');return;}
+    const epoch=S.epoch;busy(true);$('userFields').disabled=true;$('usersRefresh').disabled=true;$('removeConfirm').disabled=true;
+    try{const result=await rpc('adminRemoveCrmAccess',[username,to]);if(epoch!==S.epoch)return;if(!result?.success)throw Error('Access removal not confirmed. Refresh and retry.');S.teamAt=0;closeRemoveBox();notice('usersMessage',result.message,'ok');await loadUsers();}
     catch(e){if(epoch===S.epoch)report('usersMessage',e);}
-    finally{if(epoch===S.epoch){busy(false);$('userFields').disabled=false;$('usersRefresh').disabled=false;}}
+    finally{if(epoch===S.epoch){busy(false);$('userFields').disabled=false;$('usersRefresh').disabled=false;$('removeConfirm').disabled=false;}}
   }
   $('addUserForm').addEventListener('submit',addCrmUser);
   $('usersRefresh').addEventListener('click',()=>{if(!S.write)loadUsers();});
-  $('usersRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-user]');if(b)removeCrmAccess(b.dataset.removeUser);});
+  $('usersRows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-user]');if(b)openRemoveBox(b.dataset.removeUser);});
+  $('removeConfirm').addEventListener('click',removeCrmAccess);$('removeCancel').addEventListener('click',closeRemoveBox);
   function navigate(page,explicitLead){
     if(!S.session||S.write)return;if(['owner','upload','users'].includes(page)&&S.session.role!=='Owner')return;
     if(S.page==='legacy'&&page!=='legacy')nextSeq('legacy');

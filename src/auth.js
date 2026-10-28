@@ -95,8 +95,14 @@ export function requireOwner(s) { if (!s || s.role !== 'Owner') fail('Not author
 
 export async function adminListUsers(env, session) {
   requireOwner(session);
-  const rows = await all(env.DB, 'SELECT * FROM Users ORDER BY rowid');
-  return rows.map(userFromRow).map(u => ({ username: u.username, displayName: u.displayName, role: u.role, teamMemberName: u.teamMemberName, active: u.active }));
+  const [rows, open] = await Promise.all([all(env.DB, 'SELECT * FROM Users ORDER BY rowid'), openCustomerCounts(env.DB)]);
+  return rows.map(userFromRow).map(u => ({ username: u.username, displayName: u.displayName, role: u.role, teamMemberName: u.teamMemberName, active: u.active,
+    openCustomers: u.teamMemberName ? (open.get(u.teamMemberName) || 0) : 0 }));
+}
+/** Open (not closed) customers per CRM name. */
+async function openCustomerCounts(db) {
+  const rows = await all(db, "SELECT CRM, COUNT(*) AS n FROM Leads WHERE COALESCE(Status,'')<>'closed' GROUP BY CRM");
+  return new Map(rows.map(r => [String(r.CRM || ''), Number(r.n) || 0]));
 }
 
 export async function adminCreateCrmUser(env, session, payload) {
@@ -131,7 +137,12 @@ export async function adminCreateCrmUser(env, session, payload) {
   return { success: true, username, message: 'User created. Login ID: ' + username };
 }
 
-export async function adminRemoveCrmAccess(env, session, username) {
+/**
+ * Remove a CRM's login. Their open customers (and pending visits) move to the CRM the
+ * owner picks, in the same save — follow-up dates stay the same, nothing is lost.
+ * Also works on an already-removed CRM to move customers that were left behind.
+ */
+export async function adminRemoveCrmAccess(env, session, username, transferTo) {
   requireOwner(session);
   const db = env.DB;
   const users = (await all(db, 'SELECT * FROM Users')).map(userFromRow);
@@ -139,12 +150,33 @@ export async function adminRemoveCrmAccess(env, session, username) {
   if (matches.length !== 1) fail('User not found or duplicate username. Refresh the list.');
   const user = matches[0];
   if (user.role !== 'CRM' || user.username === session.username) fail('Only CRM employee access can be removed here. Owner accounts are protected.');
+  const from = user.teamMemberName;
+  const sharedName = !!from && users.some(u => u.username !== user.username && u.active && u.teamMemberName === from);
+  const open = from && !sharedName ? ((await openCustomerCounts(db)).get(from) || 0) : 0;
+  const to = String(transferTo || '').trim();
+  if (open > 0) {
+    if (!to) fail(user.displayName + ' ke ' + open + ' chalu customer hain. Pehle chuno ki ye customer kis CRM ko dene hain.');
+    if (to === from) fail('Customer kisi doosre CRM ko dein.');
+    if (!(await activeTeam(db)).includes(to)) fail('Select an active CRM team member.');
+  }
+  const stamp = new Date().toISOString();
   const list = [updateStmt(db, 'Users', { Active: 0 }, 'Username=?', user.username), stmt(db, 'DELETE FROM Sessions WHERE Username=?', user.username)];
   // Keep all customers and history. Stop future assignment to this team member.
-  if (user.teamMemberName && !users.some(u => u.username !== user.username && u.active && u.teamMemberName === user.teamMemberName)) {
-    list.push(updateStmt(db, 'Team', { Active: 0 }, 'Name=?', user.teamMemberName));
+  if (from && !sharedName) {
+    list.push(updateStmt(db, 'Team', { Active: 0 }, 'Name=?', from));
+    list.push(stmt(db, 'DELETE FROM LeadClaims WHERE CRM=?', from));
   }
-  if (user.active) list.push(auditStmt(db, session.username, 'REMOVE_CRM_ACCESS', 'User', user.username, { teamMemberName: user.teamMemberName }));
+  let visits = 0;
+  if (open > 0) {
+    visits = Number((await first(db, "SELECT COUNT(*) AS n FROM Visits WHERE CRM=? AND Status IN ('Planned','Rescheduled')", from)).n) || 0;
+    list.push(stmt(db, "UPDATE Leads SET CRM=?, RowVersion=RowVersion+1, LastUpdatedAt=?, LastUpdatedBy=?, LastReq='' WHERE CRM=? AND COALESCE(Status,'')<>'closed'", to, stamp, session.username, from));
+    list.push(stmt(db, "UPDATE Visits SET CRM=?, Version=Version+1, UpdatedAt=?, UpdatedBy=? WHERE CRM=? AND Status IN ('Planned','Rescheduled')", to, stamp, session.username, from));
+    list.push(auditStmt(db, session.username, 'TRANSFER_CUSTOMERS', 'User', user.username, { from, to, customers: open, visits }, stamp));
+  }
+  if (user.active) list.push(auditStmt(db, session.username, 'REMOVE_CRM_ACCESS', 'User', user.username, { teamMemberName: from }, stamp));
   await db.batch(list);
-  return { success: true, message: 'Access removed. Existing customers and call history are preserved. Pending customers can be reassigned from Edit Lead.' };
+  return { success: true, moved: open, visits, to: open ? to : '',
+    message: (user.active ? user.displayName + ' ka access hata diya. ' : '') +
+      (open ? open + ' chalu customer' + (visits ? ' aur ' + visits + ' visit' : '') + ' ab ' + to + ' ke paas hain (follow-up dates wahi). ' : 'Koi chalu customer baaki nahi tha. ') +
+      'Purani call history safe hai.' };
 }
