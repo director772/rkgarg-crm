@@ -81,23 +81,80 @@ function bucket(lead, now) {
   }
   return lead.lastCallAt ? 'unscheduled' : 'fresh';
 }
+/*
+ * New customers (no call yet, no follow-up) are shared: every CRM sees them.
+ * The CRM who records the first call becomes the customer's CRM; follow-ups stay with them.
+ * While a new customer is on someone's screen it is "held" for them (LeadClaims) so two
+ * people don't phone the same customer.
+ */
+export const isPoolLead = l => l.status !== 'closed' && !l.lastCallAt && !l.nextFollowupAt;
+const isPoolRow = r => isPoolLead({ status: r.Status, lastCallAt: toIso(r.LastCallAt), nextFollowupAt: toIso(r.NextFollowupAt) });
+/** Customers this CRM may see: own customers + all new (not yet called) customers. */
+const visibleTo = (s, l) => s.role === 'Owner' || (!!s.teamMemberName && (l.crm === s.teamMemberName || isPoolLead(l)));
+const HOLD_MS = 15 * 60000, HOLD_RENEW_MS = 10 * 60000, HOLD_COUNT = 3;
+const takenMessage = crm => 'Ye customer ab ' + (crm || 'kisi aur CRM') + ' ke paas hai (unhone pehle call kar li ya owner ne badla). Aapki entry save nahi hui.';
+
 function summary(s, leads, calls, now) {
   const out = { done: s.role === 'Owner' ? calls.total : (calls.byCrm[s.teamMemberName] || 0), fresh: 0, due: 0, overdue: 0, upcoming: 0, unscheduled: 0 };
-  leads.forEach(l => { if (s.role === 'CRM' && l.crm !== s.teamMemberName) return; const b = bucket(l, now); if (b) out[b]++; });
+  leads.forEach(l => { if (!visibleTo(s, l)) return; const b = bucket(l, now); if (b) out[b]++; });
   return out;
 }
-function nextList(s, leads, now) {
-  if (!s.teamMemberName) return [];
-  const list = leads.filter(l => l.crm === s.teamMemberName && l.status !== 'closed' && (l.nextFollowupAt ? new Date(l.nextFollowupAt) <= now : !l.lastCallAt));
+/** held: Map LeadID -> CRM holding it. New customers held by someone else are skipped. */
+function nextList(s, leads, now, held) {
+  const me = s.teamMemberName;
+  if (!me) return [];
+  held = held || new Map();
+  const list = leads.filter(l => {
+    if (l.status === 'closed') return false;
+    if (isPoolLead(l)) { const h = held.get(String(l.id)); return !h || h === me; }
+    return l.crm === me && !!l.nextFollowupAt && new Date(l.nextFollowupAt) <= now;
+  });
+  const rank = l => held.get(String(l.id)) === me ? 0 : 1;
   list.sort((a, b) => {
     const x = a.nextFollowupAt ? 0 : 1, y = b.nextFollowupAt ? 0 : 1;
-    return x - y || (x === 0 ? new Date(a.nextFollowupAt) - new Date(b.nextFollowupAt) : b.score - a.score ||
+    return x - y || (x === 0 ? new Date(a.nextFollowupAt) - new Date(b.nextFollowupAt) : rank(a) - rank(b) || b.score - a.score ||
       new Date(a.createdAt || 0) - new Date(b.createdAt || 0) || String(a.id).localeCompare(String(b.id)));
   });
   return list;
 }
+/**
+ * My Calls list: own due follow-ups + up to HOLD_COUNT new customers held for me.
+ * Holds are renewed only when needed, so most refreshes cost one small read.
+ */
+async function myQueue(db, s, leads, now) {
+  const me = s.teamMemberName, nowMs = now.getTime();
+  if (!me) return [];
+  const rows = await all(db, 'SELECT LeadID, CRM, Until FROM LeadClaims WHERE Until > ?', nowMs);
+  const held = new Map(), myUntil = new Map();
+  rows.forEach(r => { held.set(String(r.LeadID), r.CRM); if (r.CRM === me) myUntil.set(String(r.LeadID), Number(r.Until)); });
+  let list = nextList(s, leads, now, held);
+  for (let round = 0; round < 3; round++) {
+    const want = list.filter(isPoolLead).slice(0, HOLD_COUNT).map(l => String(l.id));
+    const fresh = want.every(id => (myUntil.get(id) || 0) > nowMs + HOLD_RENEW_MS) && myUntil.size === want.length;
+    if (fresh) break;
+    const stmts = [
+      stmt(db, 'DELETE FROM LeadClaims WHERE Until <= ?', nowMs),
+      stmt(db, 'DELETE FROM LeadClaims WHERE CRM=?' + (want.length ? ' AND LeadID NOT IN (' + want.map(() => '?').join(',') + ')' : ''), me, ...want)
+    ];
+    want.forEach(id => stmts.push(stmt(db, 'INSERT INTO LeadClaims (LeadID, CRM, Until) VALUES (?,?,?) ON CONFLICT(LeadID) DO UPDATE SET CRM=excluded.CRM, Until=excluded.Until WHERE LeadClaims.CRM=excluded.CRM OR LeadClaims.Until<=?', id, me, nowMs + HOLD_MS, nowMs)));
+    await db.batch(stmts);
+    myUntil.clear();
+    held.forEach((crm, id) => { if (crm === me) held.delete(id); });
+    if (!want.length) break;
+    const got = await all(db, 'SELECT LeadID, CRM, Until FROM LeadClaims WHERE LeadID IN (' + want.map(() => '?').join(',') + ')', ...want);
+    let lost = false;
+    got.forEach(g => { held.set(String(g.LeadID), g.CRM); if (g.CRM === me) myUntil.set(String(g.LeadID), Number(g.Until)); else lost = true; });
+    list = nextList(s, leads, now, held);
+    if (!lost) break;
+  }
+  // Only new customers actually held for me are sent (the screen shows them instantly after Save & Next).
+  return list.filter(l => !isPoolLead(l) || held.get(String(l.id)) === me);
+}
 async function legacyPendingCount(db) { return Number(await first(db, "SELECT COUNT(*) AS n FROM LegacyReview WHERE Status='pending'").then(r => r.n)); }
-function requireLeadAccess(s, crm) { if (s.role !== 'Owner' && !(s.role === 'CRM' && crm === s.teamMemberName)) fail('Not authorized to access this lead.'); }
+function requireLeadAccess(s, crm, pool) {
+  if (s.role === 'Owner' || (s.role === 'CRM' && s.teamMemberName && (crm === s.teamMemberName || pool))) return;
+  fail('Not authorized to access this lead.');
+}
 
 export async function getBootstrapData(env, s) {
   const b = { username: s.username, role: s.role, displayName: s.displayName, teamMemberName: s.teamMemberName || '', team: await activeTeam(env.DB), apiVersion: 4, queueDetailsVersion: 1 };
@@ -110,12 +167,12 @@ export async function getMyQueueSummary(env, s) {
 }
 export async function getNextLead(env, s) {
   if (!s.teamMemberName) fail('This login is not linked to a CRM team member. Use the Owner Dashboard.');
-  return nextList(s, await new Run(env).leads(), new Date())[0] || null;
+  return (await myQueue(env.DB, s, await new Run(env).leads(), new Date()))[0] || null;
 }
 export async function getMyCallsData(env, s) {
   const started = Date.now(), r = new Run(env), now = new Date();
   const [leads, logs, users] = await Promise.all([r.leads(), r.todayCallRows(now), r.userRows()]);
-  const list = nextList(s, leads, now);
+  const list = await myQueue(env.DB, s, leads, now);
   return { summary: summary(s, leads, callsToday(logs, users, now), now), lead: list[0] || null, queue: list.slice(0, 8), serverMs: Date.now() - started };
 }
 
@@ -147,14 +204,14 @@ export async function checkDuplicateMobile(env, s, mobile) {
   const row = await leadByMobile(env.DB, m);
   if (!row) return { found: false };
   const l = leadObj(row);
-  if (s.role === 'CRM' && l.crm !== s.teamMemberName) return { found: true, canAccess: false, name: 'Existing customer', disposition: 'Already assigned to another CRM' };
+  if (!visibleTo(s, l)) return { found: true, canAccess: false, name: 'Existing customer', disposition: 'Already assigned to another CRM' };
   return { found: true, canAccess: true, id: l.id, name: l.name, disposition: l.disposition, lead: l };
 }
 export async function getCustomerProfile(env, s, leadId) {
   const row = await leadById(env.DB, leadId);
   if (!row) fail('Lead not found.');
   const lead = leadObj(row);
-  requireLeadAccess(s, lead.crm);
+  requireLeadAccess(s, lead.crm, isPoolLead(lead));
   const logs = await all(env.DB, 'SELECT * FROM CallLog WHERE LeadID=? ORDER BY rowid', lead.id);
   const history = logs.map(g => ({ time: new Date(g.CallDate || g.CreatedAt).getTime(), date: fmtDate(g.CallDate), event: String(g.Response || '') + (g.Note ? ' — ' + g.Note : '') }))
     .sort((a, b) => a.time - b.time).map(h => [h.date, h.event]);
@@ -164,7 +221,7 @@ export async function searchCustomers(env, s, query) {
   const q = text(query, 'Search', 200).toLowerCase();
   if (!q) return { leads: [], legacy: [], hasMore: false };
   const r = new Run(env);
-  const matched = (await r.leads()).filter(l => (s.role === 'Owner' || l.crm === s.teamMemberName) && (String(l.name).toLowerCase().includes(q) || String(l.mobile).includes(q)));
+  const matched = (await r.leads()).filter(l => visibleTo(s, l) && (String(l.name).toLowerCase().includes(q) || String(l.mobile).includes(q)));
   const legacy = [];
   if (s.role === 'Owner') {
     (await all(env.DB, "SELECT ID, Name, Mobile, RowsFound FROM LegacyReview WHERE Status='pending' ORDER BY rowid")).forEach(g => {
@@ -196,7 +253,7 @@ export async function getMyQueueDetails(env, s, bucketName, offset, limit) {
       return Object.assign({}, lead, { canAccess: true });
     });
   } else {
-    items = leads.filter(l => (s.role === 'Owner' || l.crm === s.teamMemberName) && bucket(l, now) === bucketName).map(l => Object.assign({}, l, { canAccess: true }));
+    items = leads.filter(l => visibleTo(s, l) && bucket(l, now) === bucketName).map(l => Object.assign({}, l, { canAccess: true }));
   }
   items.sort((a, b) => {
     if (a.canAccess !== b.canAccess) return a.canAccess ? -1 : 1;
@@ -488,7 +545,7 @@ export async function updateLead(env, s, payload, requestId) {
   return operation(env, s, 'EDIT_LEAD', requestId, x, async () => {
     const row = await leadById(db, x.leadId);
     if (!row) fail('Lead not found.');
-    requireLeadAccess(s, row.CRM);
+    requireLeadAccess(s, row.CRM, isPoolRow(row));
     if (Number(row.RowVersion) !== x.version) return { early: conflictResult(row) };
     await validateLead(db, x);
     if (s.role === 'CRM' && x.crm !== row.CRM) fail('Only the owner can reassign an existing lead.');
@@ -513,28 +570,38 @@ async function callSave(env, s, x, requestId, action, details) {
   return operation(env, s, action, requestId, details ? Object.assign({}, x, { details }) : x, async () => {
     const row = await leadById(db, x.leadId);
     if (!row) fail('Lead not found.');
-    requireLeadAccess(s, row.CRM);
+    const pool = isPoolRow(row);
+    if (s.role === 'CRM' && row.CRM !== s.teamMemberName && !pool) fail(takenMessage(row.CRM));
+    requireLeadAccess(s, row.CRM, pool);
     if (Number(row.RowVersion) !== x.version) return { early: conflictResult(row) };
+    // First call on a new customer: the caller becomes its CRM.
+    const crm = pool && s.teamMemberName ? s.teamMemberName : row.CRM;
     if (details) {
       if (row.Source !== 'Legacy Import') fail('This combined form is only for legacy customers.');
+      if (pool && details.crm === row.CRM) details.crm = crm;
       await validateLead(db, details, x.response === 'Not Picked');
-      if (details.crm !== row.CRM) fail('Keep the assigned CRM unchanged while saving this call.');
+      if (details.crm !== crm) fail('Keep the assigned CRM unchanged while saving this call.');
       const dup = await leadByMobile(db, details.mobile);
       if (dup && dup.ID !== row.ID) return { early: duplicateResult(s, dup) };
     }
     const now = new Date(), timing = validateCall(x, now), stamp = now.toISOString();
     const before = pick(row);
-    const after = Object.assign({}, before, details ? { Name: details.name, Mobile: details.mobile, City: details.city, Source: details.source, Product: details.product, CRM: details.crm } : {}, {
-      Status: RESPONSE_TO_STATUS[x.response], Disposition: x.response, LastCallAt: timing.date, NextActionType: timing.action, NextFollowupAt: timing.followup,
+    const after = Object.assign({}, before, details ? { Name: details.name, Mobile: details.mobile, City: details.city, Source: details.source, Product: details.product } : {}, {
+      CRM: crm, Status: RESPONSE_TO_STATUS[x.response], Disposition: x.response, LastCallAt: timing.date, NextActionType: timing.action, NextFollowupAt: timing.followup,
       Note: x.note || before.Note || '', LastUpdatedAt: stamp, LastUpdatedBy: s.username, RowVersion: Number(before.RowVersion) + 1 });
     const list = [
       ...leadUpdate(db, before, after, requestId),
-      ...await callLogPlan(db, s, x.leadId, before.CRM, timing, x, stamp),
-      ...await visitPlan(db, x, x.leadId, before.CRM, s.username, stamp),
-      auditStmt(db, s.username, action, 'Lead', x.leadId, { response: x.response, rowVersion: after.RowVersion, requestId }, stamp)
+      ...await callLogPlan(db, s, x.leadId, crm, timing, x, stamp),
+      ...await visitPlan(db, x, x.leadId, crm, s.username, stamp),
+      stmt(db, 'DELETE FROM LeadClaims WHERE LeadID=?', x.leadId),
+      auditStmt(db, s.username, action, 'Lead', x.leadId, Object.assign({ response: x.response, rowVersion: after.RowVersion, requestId }, crm !== before.CRM ? { crmFrom: before.CRM, crmTo: crm } : {}), stamp)
     ];
     return { result: { success: true, leadId: x.leadId }, statements: list,
-      onConflict: async () => conflictResult(await leadById(db, x.leadId)),
+      onConflict: async () => {
+        const latest = await leadById(db, x.leadId);
+        if (latest && s.role === 'CRM' && latest.CRM !== s.teamMemberName && !isPoolRow(latest)) fail(takenMessage(latest.CRM));
+        return conflictResult(latest);
+      },
       onDuplicate: details ? async () => duplicateResult(s, await leadByMobile(db, details.mobile)) : null };
   });
 }
@@ -560,7 +627,7 @@ export async function saveCustomerVisit(env, s, p, requestId) {
   return operation(env, s, 'SAVE_VISIT', requestId, x, async () => {
     const row = await leadById(db, x.leadId);
     if (!row) fail('Lead not found.');
-    requireLeadAccess(s, row.CRM);
+    requireLeadAccess(s, row.CRM, isPoolRow(row));
     const old = x.visitId ? await first(db, 'SELECT * FROM Visits WHERE ID=?', x.visitId) : null;
     if (x.visitId && !old) fail('Visit not found.');
     if (old && (old.LeadID !== x.leadId || Number(old.Version) !== x.version)) fail('Visit changed. Refresh visits and reopen it.');

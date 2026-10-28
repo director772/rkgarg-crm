@@ -62,6 +62,11 @@ Kuch nahi karna — app pehli baar chalte hi tables khud bana leta hai (`schema.
 
 ---
 
+## Naye customer sabke liye
+- Jis customer pe abhi tak call nahi hui, wo **sab CRM** ki My Calls mein aata hai (chahe kisi ek CRM ko diya ho)
+- Jo CRM pehli call save karta hai, customer **usi ka** ho jaata hai (CRM column badal jaata hai), follow-up bhi wahi karega
+- Jo customer kisi ki screen pe khula hai wo 15 minute tak usi ke liye rukta hai, taaki 2 log ek hi customer ko phone na karein
+
 ## Sheet ke niyam (sync chalu hone ke baad)
 - Leads, CallLog, Users, Team, CRM Visits, LegacyReview mein cell badlo → kuch second mein app mein
 - Leads mein neeche nayi row (Mobile + naam) → app mein naya customer, ID apne aap

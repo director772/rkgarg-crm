@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --no-warnings test/api_test.js"
+    "test": "node --no-warnings test/api_test.js && node --no-warnings test/pool_test.js"
   },
   "devDependencies": {
     "jsdom": "^24.0.0"

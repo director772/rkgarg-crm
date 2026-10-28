@@ -163,3 +163,11 @@ CREATE TABLE IF NOT EXISTS Meta (
   Key TEXT PRIMARY KEY,
   Value TEXT DEFAULT ''
 );
+
+-- New customers (no call yet) are shown to every CRM. A CRM who has one on screen
+-- "holds" it for a few minutes so two people don't phone the same customer.
+CREATE TABLE IF NOT EXISTS LeadClaims (
+  LeadID TEXT PRIMARY KEY,
+  CRM TEXT NOT NULL,
+  Until INTEGER NOT NULL
+);
