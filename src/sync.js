@@ -36,12 +36,15 @@ const SHEET_EDITABLE = {
   LegacyReview: ['Name', 'Mobile', 'Status']
 };
 
+const TRIMMED = ['Username', 'Role', 'TeamMemberName', 'CRM', 'Status', 'ID', 'LeadID'];
 function spec(name) { const t = TABLES[name]; if (!t) fail('Unknown sheet: ' + name); return t; }
 function cell(t, col, v) {
   if (t.bools && t.bools.includes(col)) return v === true || String(v).toUpperCase() === 'TRUE' || v === 1 || v === '1' ? 1 : 0;
   if (t.ints.includes(col)) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; }
   if (v == null) return '';
   if (col === 'Mobile' && (t.table === 'Leads' || t.table === 'LegacyReview')) return normalizeMobile(v) || String(v).trim();
+  // Names used for matching are stored without extra spaces (same as the old app did).
+  if (TRIMMED.includes(col)) return String(v).trim();
   return String(v);
 }
 function rowObject(t, headers, row) {

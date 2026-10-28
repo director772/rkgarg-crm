@@ -22,7 +22,7 @@ const today = istDay(Date.now());
 // ---------- Sheet copy (first-time import) ----------
 const salt1 = 'salt-owner', salt2 = 'salt-neha';
 await sync({ op: 'append', table: 'Users', headers: ['Username', 'PasswordHash', 'Salt', 'DisplayName', 'Role', 'TeamMemberName', 'Active'],
-  rows: [['owner', await sha256Hex('pass1234', salt1), salt1, 'Owner', 'Owner', '', true], ['neha', await sha256Hex('pass1234', salt2), salt2, 'Neha', 'CRM', 'Neha', 'TRUE']] });
+  rows: [['owner', await sha256Hex('pass1234', salt1), salt1, 'Owner', 'Owner', '', true], [' neha ', await sha256Hex('pass1234', salt2), salt2, 'Neha', 'CRM', ' Neha', 'TRUE']] });
 await sync({ op: 'append', table: 'Team', headers: ['Name', 'Active'], rows: [['Neha', true], ['Bhawna', true], ['Old', false]] });
 const imp = await sync({ op: 'append', table: 'Leads', headers: ['ID', 'Name', 'Mobile', 'City', 'Source', 'Product', 'CRM', 'Status', 'Disposition', 'Score', 'LastCallAt', 'NextActionType', 'NextFollowupAt', 'Note', 'CreatedAt', 'CreatedBy', 'LastUpdatedAt', 'LastUpdatedBy', 'RowVersion'],
   rows: [

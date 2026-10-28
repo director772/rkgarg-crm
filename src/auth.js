@@ -41,7 +41,7 @@ export async function login(env, username, password) {
   if (attempts && attempts.count >= MAX_FAILURES) {
     fail('Too many failed login attempts. Try again in ' + Math.max(1, Math.ceil((attempts.until - now) / 60000)) + ' minute(s).');
   }
-  const rows = await all(db, 'SELECT * FROM Users WHERE Username=?', username);
+  const rows = await all(db, 'SELECT * FROM Users WHERE trim(Username)=?', username);
   if (rows.length > 1) fail('Duplicate username found in Users sheet. Ask the owner to correct the duplicate.');
   const user = userFromRow(rows[0]);
   const ok = !!(user && user.active && user.passwordHash && user.salt && await sha256Hex(password, user.salt) === user.passwordHash);
@@ -77,7 +77,7 @@ export async function logout(env, token) {
 export async function requireSession(env, token) {
   const db = env.DB;
   if (typeof token !== 'string' || !/^[0-9a-f-]{36}$/i.test(token)) fail('SESSION_EXPIRED');
-  const s = await first(db, 'SELECT s.Fingerprint AS Fp, s.ExpiresAt AS Exp, u.* FROM Sessions s LEFT JOIN Users u ON u.Username=s.Username WHERE s.Token=?', token);
+  const s = await first(db, 'SELECT s.Fingerprint AS Fp, s.ExpiresAt AS Exp, u.* FROM Sessions s LEFT JOIN Users u ON trim(u.Username)=s.Username WHERE s.Token=?', token);
   const expire = async () => { await run(db, 'DELETE FROM Sessions WHERE Token=?', token); fail('SESSION_EXPIRED'); };
   if (!s) fail('SESSION_EXPIRED');
   if (Date.now() >= Number(s.Exp) || !s.Username) return expire();
