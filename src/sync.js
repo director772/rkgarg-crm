@@ -104,11 +104,41 @@ export async function syncApi(env, body) {
       const rows = await all(db, `SELECT ${out} FROM ${q(t.table)} ORDER BY rowid LIMIT ? OFFSET ?`, limit, offset);
       return { ok: true, headers: t.cols, rows: rows.map(shape), total: offset + rows.length + (rows.length === limit ? 1 : 0), offset };
     }
+    case 'cursor':
+      // Current position in the change list (read before a full copy to the Sheet).
+      return { ok: true, seq: Number((await first(db, 'SELECT MAX(Seq) AS m FROM SyncLog')).m) || 0 };
+    case 'changes': {
+      // Only the rows changed after "afterSeq". Nothing changed = nothing read.
+      const after = Math.max(0, Number(body.afterSeq) || 0), limit = Math.min(2000, Math.max(1, Number(body.limit) || 500));
+      if (after > 0) await db.batch([stmt(db, 'DELETE FROM SyncLog WHERE Seq <= ?', after)]); // already in the Sheet
+      const log = await all(db, 'SELECT Seq, Tab, K FROM SyncLog WHERE Seq > ? ORDER BY Seq LIMIT ?', after, limit);
+      const byTab = new Map();
+      log.forEach(r => { if (!byTab.has(r.Tab)) byTab.set(r.Tab, new Set()); byTab.get(r.Tab).add(String(r.K)); });
+      const tabs = {};
+      for (const [name, set] of byTab) { if (TABLES[name] && TABLES[name].key) tabs[name] = await rowsByKey(db, name, [...set]); }
+      return { ok: true, tabs, lastSeq: log.length ? Number(log[log.length - 1].Seq) : after, more: log.length === limit };
+    }
+    case 'rows': {
+      // Specific rows (e.g. a Sheet edit the app refused: put the app's value back).
+      const keys = (Array.isArray(body.keys) ? body.keys : []).map(String).slice(0, 500);
+      return Object.assign({ ok: true }, await rowsByKey(db, spec(body.table) && body.table, keys));
+    }
     case 'row':
       return sheetRowEdit(env, body);
     default:
       fail('Unknown sync operation.');
   }
+}
+
+/** Current rows for these keys; keys no longer in the app come back in "deleted". */
+async function rowsByKey(db, name, keys) {
+  const t = spec(name), found = new Map();
+  for (let i = 0; i < keys.length; i += 90) {
+    const part = keys.slice(i, i + 90);
+    const rows = await all(db, `SELECT ${t.cols.map(q).join(',')} FROM ${q(t.table)} WHERE ${q(t.key)} IN (${part.map(() => '?').join(',')})`, ...part);
+    rows.forEach(r => found.set(String(r[t.key]), t.cols.map(c => (t.bools && t.bools.includes(c)) ? Number(r[c]) === 1 : r[c])));
+  }
+  return { headers: t.cols, key: t.key, rows: [...found.values()], deleted: keys.filter(k => !found.has(k)) };
 }
 
 /** One row typed in the Sheet -> app. Last change wins; the old values stay in AuditLog. */

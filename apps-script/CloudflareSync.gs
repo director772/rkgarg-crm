@@ -4,8 +4,8 @@
  * Google Sheet <-> naya Cloudflare app.
  *  1. Pehli baar: Sheet ka saara data app mein copy (menu se, ek baar).
  *  2. Har 5 minute: app ka data Sheet mein (report / backup).
- *     Sirf wahi tab dobara aata hai jisme kuch badla ho, aur AuditLog mein
- *     sirf nayi lines judti hain (Cloudflare ki free limit bachaane ke liye).
+ *     Sirf wahi lines aati hain jo badli hain (poori table dobara nahi padhi
+ *     jaati) — Cloudflare ki free limit bachaane ke liye.
  *  3. Sheet mein koi cell badlo: kuch second mein app mein.
  *
  * Setup (ek baar): Project Settings > Script Properties mein
@@ -151,20 +151,74 @@ function cfPullFromApp(force) {
   if (!lock.tryLock(20000)) return; // a Sheet edit is being sent; next run will catch up
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet(), props = PropertiesService.getScriptProperties();
-    // Change counters (a few rows). Tabs whose counter did not move are skipped.
-    let versions = null;
-    try { versions = cfCall_({ op: 'versions' }).versions || null; } catch (err) { versions = null; }
-    CF_TABS_.forEach(name => {
-      const verKey = 'CF_VER_' + name, ver = versions && versions[name] !== undefined ? String(versions[name]) : null;
-      if (force !== true && ver !== null && ss.getSheetByName(name) && props.getProperty(verKey) === ver) return;
-      if (name === 'AuditLog' && versions) cfPullAudit_(ss, props, force === true);
-      else cfPullTab_(ss, name);
-      if (ver !== null) props.setProperty(verKey, ver);
-    });
+    const cursor = props.getProperty('CF_SYNC_SEQ');
+    if (force === true || !cursor) {
+      // Full copy (first time / menu). Position is taken BEFORE copying, so nothing is missed.
+      const start = cfCall_({ op: 'cursor' }).seq;
+      CF_TABS_.forEach(name => { if (name === 'AuditLog') cfPullAudit_(ss, props, true); else cfPullTab_(ss, name); });
+      props.setProperty('CF_SYNC_SEQ', String(start));
+      props.deleteProperty('CF_RESEND');
+    } else {
+      // Only rows changed since last time. Nothing changed = nothing read.
+      let seq = Number(cursor), more = true, pages = 0;
+      while (more && pages++ < 20) {
+        const res = cfCall_({ op: 'changes', afterSeq: seq, limit: 500 });
+        Object.keys(res.tabs || {}).forEach(name => cfApplyRows_(ss, name, res.tabs[name]));
+        seq = Number(res.lastSeq) || seq; more = res.more === true;
+        props.setProperty('CF_SYNC_SEQ', String(seq));
+      }
+      cfResendRefused_(ss, props);
+      cfPullAudit_(ss, props, false);
+    }
     props.setProperty('CF_LAST_PULL', new Date().toISOString());
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Put changed rows into the Sheet: update in place by ID, add new ones, remove deleted ones. */
+function cfApplyRows_(ss, name, data) {
+  const headers = data.headers, n = data.rows.length + data.deleted.length;
+  if (!n) return;
+  const sh = ss.getSheetByName(name);
+  if (!sh || n > 150) { cfPullTab_(ss, name); return; } // big change: one full copy of this tab is simpler
+  const lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
+  const top = lastRow ? sh.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || '').trim()) : [];
+  if (top.length !== headers.length || top.some((h, i) => h !== headers[i])) { cfPullTab_(ss, name); return; }
+  const kc = headers.indexOf(data.key);
+  const cur = lastRow > 1 ? sh.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+  const where = {};
+  cur.forEach((r, i) => { const k = String(r[kc]); if (k && where[k] === undefined) where[k] = i; });
+  const adds = [];
+  data.rows.forEach(r => {
+    const vals = r.map((v, i) => cfToSheet_(headers[i], v)), i = where[String(r[kc])];
+    if (i === undefined) { adds.push(vals); return; }
+    if (!cur[i].every((v, j) => cfSame_(v, vals[j]))) sh.getRange(i + 2, 1, 1, headers.length).setValues([vals]);
+  });
+  if (adds.length) {
+    if (sh.getMaxRows() < lastRow + adds.length) sh.insertRowsAfter(sh.getMaxRows(), lastRow + adds.length - sh.getMaxRows());
+    sh.getRange(lastRow + 1, 1, adds.length, headers.length).setValues(adds);
+  }
+  data.deleted.map(k => where[String(k)]).filter(i => i !== undefined).sort((a, b) => b - a).forEach(i => sh.deleteRow(i + 2));
+}
+
+/** Sheet edits the app refused: show the app's value again in those rows. */
+function cfResendRefused_(ss, props) {
+  let list = {};
+  try { list = JSON.parse(props.getProperty('CF_RESEND') || '{}'); } catch (err) { list = {}; }
+  Object.keys(list).forEach(name => {
+    if (list[name] === 'ALL') cfPullTab_(ss, name);
+    else if (list[name].length) cfApplyRows_(ss, name, cfCall_({ op: 'rows', table: name, keys: list[name] }));
+  });
+  props.deleteProperty('CF_RESEND');
+}
+function cfMarkResend_(name, keys, all) {
+  const props = PropertiesService.getScriptProperties();
+  let list = {};
+  try { list = JSON.parse(props.getProperty('CF_RESEND') || '{}'); } catch (err) { list = {}; }
+  if (all || list[name] === 'ALL') list[name] = 'ALL';
+  else list[name] = (list[name] || []).concat(keys).filter((k, i, a) => k && a.indexOf(k) === i).slice(0, 400);
+  props.setProperty('CF_RESEND', JSON.stringify(list));
 }
 
 /** Whole tab from the app -> Sheet (writes only when something changed). */
@@ -229,7 +283,7 @@ function cfPullAudit_(ss, props, rebuildAll) {
 function cfForgetPulled_() {
   const props = PropertiesService.getScriptProperties();
   CF_TABS_.forEach(name => props.deleteProperty('CF_VER_' + name));
-  props.deleteProperty('CF_AUDIT_SEQ');
+  ['CF_SYNC_SEQ', 'CF_AUDIT_SEQ', 'CF_RESEND'].forEach(k => props.deleteProperty(k));
 }
 
 /* ---------------- 3. Sheet mein badlav -> app ---------------- */
@@ -248,19 +302,19 @@ function cfOnSheetEdit(e) {
     const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || '').trim());
     const startRow = Math.max(2, first), rows = sh.getRange(startRow, 1, first + count - startRow, lastCol).getValues();
     const user = (Session.getActiveUser().getEmail() || 'sheet').split('@')[0];
-    const messages = [];
+    const messages = [], refused = [];
     rows.slice(0, 50).forEach((row, i) => {
       if (!row.some(v => v !== '' && v !== null)) return;
       const res = cfCall_({ op: 'row', table: name, headers: headers, row: row.map((v, c) => cfToApp_(headers[c], v)), user: user });
       const keyName = name === 'Users' ? 'Username' : name === 'Team' ? 'Name' : 'ID';
       const keyCol = headers.indexOf(keyName);
       if (res.created && res.key && keyCol !== -1 && !row[keyCol]) sh.getRange(startRow + i, keyCol + 1).setValue(res.key);
-      if (!res.ok && !res.waiting) messages.push('Row ' + (startRow + i) + ': ' + res.message);
+      if (!res.ok && !res.waiting) { messages.push('Row ' + (startRow + i) + ': ' + res.message); if (keyCol !== -1 && row[keyCol]) refused.push(String(row[keyCol])); }
       const noteCell = sh.getRange(startRow + i, e.range.getColumn());
       noteCell.setNote(res.ok || res.waiting ? '' : 'App mein NAHI gaya: ' + res.message);
     });
-    // A refused change: re-send this tab on the next pull so the Sheet shows the app's value again.
-    if (messages.length || count > 50) PropertiesService.getScriptProperties().deleteProperty('CF_VER_' + name);
+    // Refused change: next pull puts the app's value back in those rows.
+    if (refused.length || count > 50) cfMarkResend_(name, refused, count > 50);
     if (count > 50) messages.push('Ek baar mein 50 rows tak hi bhejte hain. Baaki rows 5 min wale sync mein theek ho jaayengi.');
     if (messages.length) SpreadsheetApp.getActiveSpreadsheet().toast(messages.join('\n'), 'Smart CRM', 10);
   } catch (err) {

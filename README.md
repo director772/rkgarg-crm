@@ -81,7 +81,8 @@ Kuch nahi karna — app pehli baar chalte hi tables khud bana leta hai (`schema.
 - Koi badlav app mein nahi gaya toh us cell pe note aayega "App mein NAHI gaya: …"
 
 ## Free limit (rows read) kaise bachta hai
-- Har 5 minute Sheet pehle sirf "kya badla?" poochti hai (kuch rows). Jis tab mein kuch nahi badla, wo dobara nahi padha jaata
+- App mein jo bhi line badalti hai, uska ek chhota note (SyncLog) banta hai
+- Har 5 minute Sheet poochti hai "#N ke baad kya badla?" aur sirf wahi lines leti hai (kuch na badla = kuch nahi padha)
 - AuditLog mein sirf nayi lines judti hain
 - Menu **Abhi app se Sheet update karo** = poori Sheet dobara (zaroorat ho tabhi)
 

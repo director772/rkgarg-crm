@@ -16,7 +16,7 @@ class Sheet { constructor(name, rows) { this.name = name; this.rows = rows; this
   getName() { return this.name; } getLastRow() { let n = this.rows.length; while (n && !this.rows[n - 1].some(v => v !== '' && v != null)) n--; return n; }
   getLastColumn() { return Math.max(0, ...this.rows.map(r => { let n = r.length; while (n && (r[n - 1] === '' || r[n - 1] == null)) n--; return n; })); }
   getRange(r, c, nr = 1, nc = 1) { return new Range(this, r, c, nr, nc); } getDataRange() { return this.getRange(1, 1, this.getLastRow(), this.getLastColumn()); }
-  clearContents() { this.rows = []; return this; } getMaxColumns() { return 40; } getMaxRows() { return 100000; } insertColumnsAfter() {} insertRowsAfter() {} setFrozenRows() {} }
+  clearContents() { this.rows = []; return this; } deleteRow(r) { this.rows.splice(r - 1, 1); } getMaxColumns() { return 40; } getMaxRows() { return 100000; } insertColumnsAfter() {} insertRowsAfter() {} setFrozenRows() {} }
 const D = s => new Date(s);
 const sheets = {
   Users: new Sheet('Users', [['Username', 'PasswordHash', 'Salt', 'DisplayName', 'Role', 'TeamMemberName', 'Active'],
@@ -70,16 +70,23 @@ check(l1[lh.indexOf('NextFollowupAt')] instanceof Date, 'dates written as real d
 check(sheets.CallLog.getLastRow() === 3, 'CallLog in Sheet has new call row');
 const before = JSON.stringify(sheets.Leads.rows); F.cfPullFromApp();
 check(JSON.stringify(sheets.Leads.rows) === before, 'second pull with no change keeps Sheet same');
-// Free-limit saver: nothing changed -> only the small 'versions' call, no table is read.
+// Free-limit saver: nothing changed -> only 2 tiny calls, no table is read.
 ops.length = 0; F.cfPullFromApp();
-check(ops.length === 1 && ops[0] === 'versions:', 'no change: pull reads nothing but the change counters (' + ops.join(',') + ')');
+check(ops.join(',') === 'changes:,export:AuditLog', 'no change: only "what changed?" calls (' + ops.join(',') + ')');
 const auditApp = Number((await app('SELECT COUNT(*) AS n FROM AuditLog')).n);
 check(sheets.AuditLog.getLastRow() === auditApp + 1, 'AuditLog in Sheet = app (' + auditApp + ' lines)');
-const save2 = await (await fetch(props.CF_URL + '/api/saveCallOutcome', { method: 'POST', body: JSON.stringify({ token: tok, args: [{ leadId: 'L1', knownRowVersion: 5, response: 'Call Later', nextActionType: 'Call', nextFollowupAt: new Date(Date.now() + 2 * 86400000).toISOString(), note: '' }, 'req-sync-0002'] }) })).json();
+const leadRowsBefore = sheets.Leads.getLastRow();
+const save2 = await (await fetch(props.CF_URL + '/api/saveCallOutcome', { method: 'POST', body: JSON.stringify({ token: tok, args: [{ leadId: 'L1', knownRowVersion: 5, response: 'Call Later', nextActionType: 'Call', nextFollowupAt: new Date(Date.now() + 2 * 86400000).toISOString(), note: 'kal phir' }, 'req-sync-0002'] }) })).json();
 check(save2.ok && save2.result.success, 'second call saved in app');
 ops.length = 0; F.cfPullFromApp();
-check(!ops.includes('export:Users') && !ops.includes('export:LegacyImportRows') && ops.includes('export:Leads') && ops.includes('export:AuditLog'), 'after a call only changed tabs are read: ' + ops.join(','));
+check(!ops.some(o => o.startsWith('export:') && o !== 'export:AuditLog'), 'after a call: no full table read, only changed rows (' + ops.join(',') + ')');
+const l1b = sheets.Leads.rows.find(r => r[0] === 'L1');
+check(l1b[lh.indexOf('Disposition')] === 'Call Later' && l1b[lh.indexOf('Note')] === 'kal phir' && sheets.Leads.getLastRow() === leadRowsBefore, 'that customer\'s row updated in place, no extra row');
+check(sheets.CallLog.getLastRow() === 4, 'new call added as a new CallLog row');
 check(sheets.AuditLog.getLastRow() === auditApp + 2 && sheets.AuditLog.rows[auditApp + 1][2] === 'SAVE_CALL', 'AuditLog: only the 1 new line added, no repeats');
+check(Number((await app('SELECT COUNT(*) AS n FROM SyncLog')).n) <= 4, 'delivered change lines are cleaned up');
+ops.length = 0; F.cfPullFromApp();
+check(ops.join(',') === 'changes:,export:AuditLog', 'next pull: nothing left to send');
 // 3) Sheet edit -> app
 const r = sheets.Leads.rows.indexOf(l1) + 1;
 l1[lh.indexOf('City')] = 'Ballia';
