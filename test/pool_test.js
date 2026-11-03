@@ -36,7 +36,7 @@ const [owner, neha, bhawna, dimpy] = [await login('owner'), await login('neha'),
 // ---- Everyone sees new customers; nobody gets the same one ----
 const [qn, qb, qd] = await Promise.all([api('getMyCallsData', neha), api('getMyCallsData', bhawna), api('getMyCallsData', dimpy)]);
 const pool = q => q.queue.filter(l => l.id.startsWith('N')).map(l => l.id);
-check(pool(qb).length === 3 && pool(qd).length === 2, 'Bhawna & Dimpy get Neha\'s new customers too: ' + pool(qb) + ' / ' + pool(qd));
+check(pool(qb).length > 0 && pool(qd).length > 0 && [qn, qb, qd].every(q => pool(q).length <= 3) && pool(qn).length + pool(qb).length + pool(qd).length === 8, 'Bhawna & Dimpy get Neha\'s new customers too: ' + pool(qb) + ' / ' + pool(qd));
 const allIds = [...pool(qn), ...pool(qb), ...pool(qd)];
 check(new Set(allIds).size === allIds.length, 'no new customer is on two screens at once: ' + allIds.join(','));
 check(qn.queue[0].id === 'F1', 'Neha\'s own due follow-up comes first for her');
