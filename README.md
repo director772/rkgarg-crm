@@ -80,6 +80,11 @@ Kuch nahi karna — app pehli baar chalte hi tables khud bana leta hai (`schema.
 - **Password** Sheet se nahi badlega (Manage Users se)
 - Koi badlav app mein nahi gaya toh us cell pe note aayega "App mein NAHI gaya: …"
 
+## Free limit (rows read) kaise bachta hai
+- Har 5 minute Sheet pehle sirf "kya badla?" poochti hai (kuch rows). Jis tab mein kuch nahi badla, wo dobara nahi padha jaata
+- AuditLog mein sirf nayi lines judti hain
+- Menu **Abhi app se Sheet update karo** = poori Sheet dobara (zaroorat ho tabhi)
+
 ## Speed / plan
 Free Cloudflare plan abhi ke data ke liye kaafi hai. Agar kabhi screen pe "Server error … exceeded" aaye
 (bahut bada data), toh Workers Paid plan ($5/mahina) le lein — code badalna nahi padega.

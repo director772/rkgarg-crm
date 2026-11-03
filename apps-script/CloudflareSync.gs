@@ -4,6 +4,8 @@
  * Google Sheet <-> naya Cloudflare app.
  *  1. Pehli baar: Sheet ka saara data app mein copy (menu se, ek baar).
  *  2. Har 5 minute: app ka data Sheet mein (report / backup).
+ *     Sirf wahi tab dobara aata hai jisme kuch badla ho, aur AuditLog mein
+ *     sirf nayi lines judti hain (Cloudflare ki free limit bachaane ke liye).
  *  3. Sheet mein koi cell badlo: kuch second mein app mein.
  *
  * Setup (ek baar): Project Settings > Script Properties mein
@@ -133,6 +135,7 @@ function cfCopySheetToApp_() {
       }
       lines.push(name + ': ' + inserted + (skipped.length ? '  (chhoda: ' + skipped.slice(0, 10).join(', ') + (skipped.length > 10 ? '…' : '') + ')' : ''));
     });
+    cfForgetPulled_();
     const report = lines.join('\n');
     Logger.log(report);
     return report;
@@ -143,42 +146,90 @@ function cfCopySheetToApp_() {
 
 /* ---------------- 2. Har 5 minute: app -> Sheet ---------------- */
 
-function cfPullFromApp() {
+function cfPullFromApp(force) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return; // a Sheet edit is being sent; next run will catch up
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = SpreadsheetApp.getActiveSpreadsheet(), props = PropertiesService.getScriptProperties();
+    // Change counters (a few rows). Tabs whose counter did not move are skipped.
+    let versions = null;
+    try { versions = cfCall_({ op: 'versions' }).versions || null; } catch (err) { versions = null; }
     CF_TABS_.forEach(name => {
-      let headers = null, rows = [], offset = 0, total = 1;
-      while (offset < total) {
-        const res = cfCall_({ op: 'export', table: name, offset: offset, limit: 1000 });
-        headers = res.headers; total = res.total;
-        rows = rows.concat(res.rows);
-        offset += res.rows.length;
-        if (!res.rows.length) break;
-      }
-      if (!headers) return;
-      const matrix = [headers].concat(rows.map(r => r.map((v, i) => cfToSheet_(headers[i], v))));
-      let sh = ss.getSheetByName(name);
-      if (!sh) sh = ss.insertSheet(name);
-      // Write only when something changed (keeps the Sheet calm for people reading it).
-      const lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
-      if (lastRow === matrix.length && lastCol === headers.length) {
-        const cur = sh.getRange(1, 1, lastRow, lastCol).getValues();
-        const same = cur.every((r, i) => r.every((v, j) => cfSame_(v, matrix[i][j])));
-        if (same) return;
-      }
-      if (sh.getMaxColumns() < headers.length) sh.insertColumnsAfter(sh.getMaxColumns(), headers.length - sh.getMaxColumns());
-      if (sh.getMaxRows() < matrix.length) sh.insertRowsAfter(sh.getMaxRows(), matrix.length - sh.getMaxRows());
-      sh.getRange(1, 1, matrix.length, headers.length).setValues(matrix);
-      if (lastRow > matrix.length) sh.getRange(matrix.length + 1, 1, lastRow - matrix.length, Math.max(lastCol, headers.length)).clearContent();
-      if (lastCol > headers.length) sh.getRange(1, headers.length + 1, Math.max(lastRow, matrix.length), lastCol - headers.length).clearContent();
-      sh.setFrozenRows(1);
+      const verKey = 'CF_VER_' + name, ver = versions && versions[name] !== undefined ? String(versions[name]) : null;
+      if (force !== true && ver !== null && ss.getSheetByName(name) && props.getProperty(verKey) === ver) return;
+      if (name === 'AuditLog' && versions) cfPullAudit_(ss, props, force === true);
+      else cfPullTab_(ss, name);
+      if (ver !== null) props.setProperty(verKey, ver);
     });
-    PropertiesService.getScriptProperties().setProperty('CF_LAST_PULL', new Date().toISOString());
+    props.setProperty('CF_LAST_PULL', new Date().toISOString());
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Whole tab from the app -> Sheet (writes only when something changed). */
+function cfPullTab_(ss, name) {
+  let headers = null, rows = [], offset = 0, total = 1;
+  while (offset < total) {
+    const res = cfCall_({ op: 'export', table: name, offset: offset, limit: 1000 });
+    headers = res.headers; total = res.total;
+    rows = rows.concat(res.rows);
+    offset += res.rows.length;
+    if (!res.rows.length) break;
+  }
+  if (!headers) return;
+  const matrix = [headers].concat(rows.map(r => r.map((v, i) => cfToSheet_(headers[i], v))));
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  // Write only when something changed (keeps the Sheet calm for people reading it).
+  const lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
+  if (lastRow === matrix.length && lastCol === headers.length) {
+    const cur = sh.getRange(1, 1, lastRow, lastCol).getValues();
+    const same = cur.every((r, i) => r.every((v, j) => cfSame_(v, matrix[i][j])));
+    if (same) return;
+  }
+  if (sh.getMaxColumns() < headers.length) sh.insertColumnsAfter(sh.getMaxColumns(), headers.length - sh.getMaxColumns());
+  if (sh.getMaxRows() < matrix.length) sh.insertRowsAfter(sh.getMaxRows(), matrix.length - sh.getMaxRows());
+  sh.getRange(1, 1, matrix.length, headers.length).setValues(matrix);
+  if (lastRow > matrix.length) sh.getRange(matrix.length + 1, 1, lastRow - matrix.length, Math.max(lastCol, headers.length)).clearContent();
+  if (lastCol > headers.length) sh.getRange(1, headers.length + 1, Math.max(lastRow, matrix.length), lastCol - headers.length).clearContent();
+  sh.setFrozenRows(1);
+}
+
+/** AuditLog only grows: add just the new lines (full rebuild the first time or when forced). */
+function cfPullAudit_(ss, props, rebuildAll) {
+  let sh = ss.getSheetByName('AuditLog');
+  let seq = Number(props.getProperty('CF_AUDIT_SEQ') || 0);
+  const rebuild = rebuildAll || !sh || !seq;
+  if (rebuild) seq = 0;
+  let headers = null, rows = [], more = true, pages = 0;
+  while (more && pages++ < 200) {
+    const res = cfCall_({ op: 'export', table: 'AuditLog', afterSeq: seq, limit: 1000 });
+    headers = res.headers; rows = rows.concat(res.rows); seq = Number(res.lastSeq) || seq; more = res.more === true;
+  }
+  if (!headers) return;
+  const data = rows.map(r => r.map((v, i) => cfToSheet_(headers[i], v)));
+  if (!sh) sh = ss.insertSheet('AuditLog');
+  if (rebuild) {
+    sh.clearContents();
+    const matrix = [headers].concat(data);
+    if (sh.getMaxRows() < matrix.length) sh.insertRowsAfter(sh.getMaxRows(), matrix.length - sh.getMaxRows());
+    if (sh.getMaxColumns() < headers.length) sh.insertColumnsAfter(sh.getMaxColumns(), headers.length - sh.getMaxColumns());
+    sh.getRange(1, 1, matrix.length, headers.length).setValues(matrix);
+    sh.setFrozenRows(1);
+  } else if (data.length) {
+    const start = sh.getLastRow() + 1;
+    if (sh.getMaxRows() < start + data.length - 1) sh.insertRowsAfter(sh.getMaxRows(), start + data.length - 1 - sh.getMaxRows());
+    sh.getRange(start, 1, data.length, headers.length).setValues(data);
+  }
+  props.setProperty('CF_AUDIT_SEQ', String(seq));
+}
+
+/** Forget what was sent, so the next pull re-sends every tab (after a fresh copy). */
+function cfForgetPulled_() {
+  const props = PropertiesService.getScriptProperties();
+  CF_TABS_.forEach(name => props.deleteProperty('CF_VER_' + name));
+  props.deleteProperty('CF_AUDIT_SEQ');
 }
 
 /* ---------------- 3. Sheet mein badlav -> app ---------------- */
@@ -208,6 +259,8 @@ function cfOnSheetEdit(e) {
       const noteCell = sh.getRange(startRow + i, e.range.getColumn());
       noteCell.setNote(res.ok || res.waiting ? '' : 'App mein NAHI gaya: ' + res.message);
     });
+    // A refused change: re-send this tab on the next pull so the Sheet shows the app's value again.
+    if (messages.length || count > 50) PropertiesService.getScriptProperties().deleteProperty('CF_VER_' + name);
     if (count > 50) messages.push('Ek baar mein 50 rows tak hi bhejte hain. Baaki rows 5 min wale sync mein theek ho jaayengi.');
     if (messages.length) SpreadsheetApp.getActiveSpreadsheet().toast(messages.join('\n'), 'Smart CRM', 10);
   } catch (err) {
@@ -235,6 +288,6 @@ function cfSetupSync() {
 
 /** Menu item: update the Sheet from the app right now. */
 function cfPullNowMenu() {
-  cfPullFromApp();
+  cfPullFromApp(true); // full refresh: every tab, even if nothing changed
   SpreadsheetApp.getActiveSpreadsheet().toast('Sheet app ke data se update ho gayi.', 'Smart CRM', 5);
 }

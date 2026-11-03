@@ -16,7 +16,7 @@ class Sheet { constructor(name, rows) { this.name = name; this.rows = rows; this
   getName() { return this.name; } getLastRow() { let n = this.rows.length; while (n && !this.rows[n - 1].some(v => v !== '' && v != null)) n--; return n; }
   getLastColumn() { return Math.max(0, ...this.rows.map(r => { let n = r.length; while (n && (r[n - 1] === '' || r[n - 1] == null)) n--; return n; })); }
   getRange(r, c, nr = 1, nc = 1) { return new Range(this, r, c, nr, nc); } getDataRange() { return this.getRange(1, 1, this.getLastRow(), this.getLastColumn()); }
-  getMaxColumns() { return 40; } getMaxRows() { return 100000; } insertColumnsAfter() {} insertRowsAfter() {} setFrozenRows() {} }
+  clearContents() { this.rows = []; return this; } getMaxColumns() { return 40; } getMaxRows() { return 100000; } insertColumnsAfter() {} insertRowsAfter() {} setFrozenRows() {} }
 const D = s => new Date(s);
 const sheets = {
   Users: new Sheet('Users', [['Username', 'PasswordHash', 'Salt', 'DisplayName', 'Role', 'TeamMemberName', 'Active'],
@@ -32,20 +32,20 @@ const sheets = {
   LegacyReview: new Sheet('LegacyReview', [['ID', 'Name', 'Mobile', 'RowsFound', 'LastKnownDisposition', 'LastKnownDate', 'Details', 'Status', 'ResolvedBy', 'ResolvedAt', 'ImportBatchID', 'ImportSource'], ['LEG-1', 'Sonu', '7456997801', 1, 'x', '27-Oct-26', '[]', 'pending', '', '', 'B1', 'LegacyImportRows']]),
   AuditLog: new Sheet('AuditLog', [['Timestamp', 'User', 'Action', 'EntityType', 'EntityID', 'Details'], [D('2026-10-28T08:00:00Z'), 'owner', 'LOGIN', 'User', 'owner', '']])
 };
-const toasts = [];
+const toasts = [], ops = [];
 const ss = { getSheetByName: n => sheets[n] || null, insertSheet: n => (sheets[n] = new Sheet(n, [])), toast: m => toasts.push(m), getActive() { return ss; } };
 const props = { CF_URL: 'http://127.0.0.1:' + port, CF_SYNC_KEY: env.SYNC_KEY };
 const ctx = {
   SpreadsheetApp: { getActiveSpreadsheet: () => ss, getActive: () => ss, getUi: () => ({ alert() {}, prompt: () => ({ getSelectedButton: () => 'OK', getResponseText: () => 'COPY' }), Button: { OK: 'OK' }, ButtonSet: {} }) },
   LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
-  PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => props[k] = v }) },
-  UrlFetchApp: { fetch: (url, o) => { const out = execFileSync('curl', ['-s', '-X', 'POST', '-H', 'content-type: application/json', '--data-binary', '@-', '-w', '\n%{http_code}', url], { input: o.payload }).toString(); const i = out.lastIndexOf('\n'); return { getContentText: () => out.slice(0, i), getResponseCode: () => Number(out.slice(i + 1)) }; } },
+  PropertiesService: { getScriptProperties: () => ({ getProperty: k => props[k] || null, setProperty: (k, v) => props[k] = v, deleteProperty: k => { delete props[k]; } }) },
+  UrlFetchApp: { fetch: (url, o) => { ops.push(JSON.parse(o.payload).op + ':' + (JSON.parse(o.payload).table || '')); const out = execFileSync('curl', ['-s', '-X', 'POST', '-H', 'content-type: application/json', '--data-binary', '@-', '-w', '\n%{http_code}', url], { input: o.payload }).toString(); const i = out.lastIndexOf('\n'); return { getContentText: () => out.slice(0, i), getResponseCode: () => Number(out.slice(i + 1)) }; } },
   Utilities: { getUuid: () => crypto.randomUUID(), formatDate: (d, tz, f) => { const x = new Date(d.getTime() + 19800000).toISOString(); if (f === 'yyyy-MM-dd') return x.slice(0, 10); return x; } },
   Session: { getActiveUser: () => ({ getEmail: () => 'anshul@rkgargjeans.com' }) },
   ScriptApp: { getProjectTriggers: () => [] }, Logger: { log() {} }, console, Date, JSON, Math, String, Number, Array, Object, isNaN, Error, RegExp
 };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(new URL('../apps-script/CloudflareSync.gs', import.meta.url), 'utf8') + ';this.F={cfCopySheetToApp_,cfPullFromApp,cfOnSheetEdit,cfCall_};', ctx);
+vm.runInContext(fs.readFileSync(new URL('../apps-script/CloudflareSync.gs', import.meta.url), 'utf8') + ';this.F={cfCopySheetToApp_,cfPullFromApp,cfOnSheetEdit,cfCall_,cfPullNowMenu};', ctx);
 const F = ctx.F;
 // 1) first-time copy
 const rep = F.cfCopySheetToApp_();
@@ -70,6 +70,16 @@ check(l1[lh.indexOf('NextFollowupAt')] instanceof Date, 'dates written as real d
 check(sheets.CallLog.getLastRow() === 3, 'CallLog in Sheet has new call row');
 const before = JSON.stringify(sheets.Leads.rows); F.cfPullFromApp();
 check(JSON.stringify(sheets.Leads.rows) === before, 'second pull with no change keeps Sheet same');
+// Free-limit saver: nothing changed -> only the small 'versions' call, no table is read.
+ops.length = 0; F.cfPullFromApp();
+check(ops.length === 1 && ops[0] === 'versions:', 'no change: pull reads nothing but the change counters (' + ops.join(',') + ')');
+const auditApp = Number((await app('SELECT COUNT(*) AS n FROM AuditLog')).n);
+check(sheets.AuditLog.getLastRow() === auditApp + 1, 'AuditLog in Sheet = app (' + auditApp + ' lines)');
+const save2 = await (await fetch(props.CF_URL + '/api/saveCallOutcome', { method: 'POST', body: JSON.stringify({ token: tok, args: [{ leadId: 'L1', knownRowVersion: 5, response: 'Call Later', nextActionType: 'Call', nextFollowupAt: new Date(Date.now() + 2 * 86400000).toISOString(), note: '' }, 'req-sync-0002'] }) })).json();
+check(save2.ok && save2.result.success, 'second call saved in app');
+ops.length = 0; F.cfPullFromApp();
+check(!ops.includes('export:Users') && !ops.includes('export:LegacyImportRows') && ops.includes('export:Leads') && ops.includes('export:AuditLog'), 'after a call only changed tabs are read: ' + ops.join(','));
+check(sheets.AuditLog.getLastRow() === auditApp + 2 && sheets.AuditLog.rows[auditApp + 1][2] === 'SAVE_CALL', 'AuditLog: only the 1 new line added, no repeats');
 // 3) Sheet edit -> app
 const r = sheets.Leads.rows.indexOf(l1) + 1;
 l1[lh.indexOf('City')] = 'Ballia';
@@ -90,5 +100,10 @@ check(String(sheets.Leads.rows.find(x => x[0] === 'L1')[lh.indexOf('Mobile')]) =
 // Team edit
 sheets.Team.rows[2][1] = false; F.cfOnSheetEdit({ range: sheets.Team.getRange(3, 2) });
 check((await app("SELECT Active FROM Team WHERE Name='Dimpy'")).Active === 0, 'Team Active FALSE in Sheet -> app');
+// Menu "Abhi app se Sheet update karo" = full refresh of every tab
+sheets.Users.rows[1][3] = 'Galat Naam (sirf Sheet mein)';
+ops.length = 0; F.cfPullNowMenu();
+check(ops.includes('export:Users') && sheets.Users.rows[1][3] === 'Owner', 'menu refresh re-sends every tab (Sheet back to app data)');
+check(sheets.AuditLog.getLastRow() === Number((await app('SELECT COUNT(*) AS n FROM AuditLog')).n) + 1, 'AuditLog rebuilt fully on menu refresh, no duplicates');
 console.log(`\n${ok} ok, ${bad} failed`);
 srv.close(); process.exit(bad ? 1 : 0);

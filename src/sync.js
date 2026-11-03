@@ -82,13 +82,27 @@ export async function syncApi(env, body) {
       }
       return { ok: true, inserted: objs.length - skipped.length, skipped };
     }
+    case 'versions': {
+      // Change counter per tab (a few rows). The Sheet only re-reads tabs whose counter moved.
+      const rows = await all(db, 'SELECT Tab, V FROM SyncVer');
+      const versions = {};
+      rows.forEach(r => { if (TABLES[r.Tab]) versions[r.Tab] = Number(r.V) || 0; });
+      return { ok: true, versions };
+    }
     case 'export': {
+      // No COUNT(*) here: counting re-reads the whole table every time.
+      // "total" just tells the caller whether another page may follow.
       const t = spec(body.table), offset = Math.max(0, Number(body.offset) || 0), limit = Math.min(1000, Math.max(1, Number(body.limit) || 500));
-      const [rows, total] = await Promise.all([
-        all(db, `SELECT ${t.cols.map(q).join(',')} FROM ${q(t.table)} ORDER BY rowid LIMIT ? OFFSET ?`, limit, offset),
-        first(db, `SELECT COUNT(*) AS n FROM ${q(t.table)}`)
-      ]);
-      return { ok: true, headers: t.cols, rows: rows.map(r => t.cols.map(c => (t.bools && t.bools.includes(c)) ? Number(r[c]) === 1 : r[c])), total: Number(total.n), offset };
+      const out = t.cols.map(q).join(',');
+      const shape = r => t.cols.map(c => (t.bools && t.bools.includes(c)) ? Number(r[c]) === 1 : r[c]);
+      if (t.table === 'AuditLog' && body.afterSeq !== undefined) {
+        // History only grows: send just the new lines.
+        const after = Math.max(0, Number(body.afterSeq) || 0);
+        const rows = await all(db, `SELECT Seq, ${out} FROM AuditLog WHERE Seq > ? ORDER BY Seq LIMIT ?`, after, limit);
+        return { ok: true, headers: t.cols, rows: rows.map(shape), lastSeq: rows.length ? Number(rows[rows.length - 1].Seq) : after, more: rows.length === limit };
+      }
+      const rows = await all(db, `SELECT ${out} FROM ${q(t.table)} ORDER BY rowid LIMIT ? OFFSET ?`, limit, offset);
+      return { ok: true, headers: t.cols, rows: rows.map(shape), total: offset + rows.length + (rows.length === limit ? 1 : 0), offset };
     }
     case 'row':
       return sheetRowEdit(env, body);
