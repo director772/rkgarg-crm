@@ -508,6 +508,12 @@ function leadUpdate(db, before, after, requestId) {
     guardStmt(db, 'EXISTS (SELECT 1 FROM Leads WHERE ID=? AND LastReq=?)', before.ID, requestId)
   ];
 }
+/** Customer details changed in the same save (e.g. mobile corrected during a legacy call) — kept in AuditLog. */
+function detailChanges(before, after) {
+  const changes = {};
+  ['Name', 'Mobile', 'City', 'Source', 'Product'].forEach(h => { if (String(before[h] || '') !== String(after[h] || '')) changes[h] = { before: before[h], after: after[h] }; });
+  return Object.keys(changes).length ? { changes } : {};
+}
 const pick = r => { const o = {}; LEAD_FIELDS.forEach(k => o[k] = r[k]); return o; };
 
 async function createLeadImpl(env, s, payload, requestId, withCall) {
@@ -594,7 +600,7 @@ async function callSave(env, s, x, requestId, action, details) {
       ...await callLogPlan(db, s, x.leadId, crm, timing, x, stamp),
       ...await visitPlan(db, x, x.leadId, crm, s.username, stamp),
       stmt(db, 'DELETE FROM LeadClaims WHERE LeadID=?', x.leadId),
-      auditStmt(db, s.username, action, 'Lead', x.leadId, Object.assign({ response: x.response, rowVersion: after.RowVersion, requestId }, crm !== before.CRM ? { crmFrom: before.CRM, crmTo: crm } : {}), stamp)
+      auditStmt(db, s.username, action, 'Lead', x.leadId, Object.assign({ response: x.response, rowVersion: after.RowVersion, requestId }, crm !== before.CRM ? { crmFrom: before.CRM, crmTo: crm } : {}, detailChanges(before, after)), stamp)
     ];
     return { result: { success: true, leadId: x.leadId }, statements: list,
       onConflict: async () => {
@@ -649,4 +655,79 @@ export async function saveCustomerVisit(env, s, p, requestId) {
     list.push(auditStmt(db, s.username, 'SAVE_VISIT', 'Lead', x.leadId, { before: old, after: visit, requestId }, stamp));
     return { result: { success: true, leadId: x.leadId }, statements: list, onConflict: async () => fail('Visit changed. Refresh visits and reopen it.') };
   });
+}
+
+/* ---------------- Owner: pura hisaab (read only) ---------------- */
+
+/**
+ * One clear summary for the owner: how many numbers, how many called, how many
+ * call entries, where every customer stands, per CRM, and how the uploaded list
+ * matches the app. Only counts are read (SQL does the adding up); nothing changes.
+ * Loaded only when the owner opens the dashboard, never in the background.
+ */
+export async function getOwnerSummary(env, s) {
+  requireOwner(s);
+  const db = env.DB, nowIso = new Date().toISOString(), [ta, tb] = dayRangeUtc(dayKey(new Date()), dayKey(new Date()));
+  const [leadsAgg, crmRows, srcRows, callAgg, callCrm, teamRows, list, listMissing, repeats] = await Promise.all([
+    first(db, `SELECT COUNT(*) AS total,
+        SUM(CASE WHEN COALESCE(LastCallAt,'')<>'' THEN 1 ELSE 0 END) AS called,
+        SUM(CASE WHEN Status='interested' THEN 1 ELSE 0 END) AS interested,
+        SUM(CASE WHEN Status='callback' THEN 1 ELSE 0 END) AS callback,
+        SUM(CASE WHEN Status='visit' THEN 1 ELSE 0 END) AS visit,
+        SUM(CASE WHEN Status='closed' THEN 1 ELSE 0 END) AS closed,
+        SUM(CASE WHEN Status<>'closed' AND COALESCE(NextFollowupAt,'')<>'' AND NextFollowupAt<=? THEN 1 ELSE 0 END) AS overdue,
+        SUM(CASE WHEN Status<>'closed' AND NextFollowupAt>? THEN 1 ELSE 0 END) AS future,
+        SUM(CASE WHEN Status<>'closed' AND COALESCE(NextFollowupAt,'')='' AND COALESCE(LastCallAt,'')<>'' THEN 1 ELSE 0 END) AS noFollowup
+      FROM Leads`, nowIso, nowIso),
+    all(db, `SELECT CRM AS crm, COUNT(*) AS total,
+        SUM(CASE WHEN Status<>'closed' THEN 1 ELSE 0 END) AS open,
+        SUM(CASE WHEN Status<>'closed' AND COALESCE(NextFollowupAt,'')<>'' AND NextFollowupAt<=? THEN 1 ELSE 0 END) AS overdue,
+        SUM(CASE WHEN Status='closed' THEN 1 ELSE 0 END) AS closed
+      FROM Leads GROUP BY CRM`, nowIso),
+    all(db, 'SELECT Source AS source, COUNT(*) AS n FROM Leads GROUP BY Source ORDER BY n DESC'),
+    first(db, `SELECT COUNT(*) AS entries, SUM(CASE WHEN CallDate>=? AND CallDate<? THEN 1 ELSE 0 END) AS today FROM CallLog`, ta, tb),
+    all(db, `SELECT CRM AS crm, COUNT(*) AS entries, SUM(CASE WHEN CallDate>=? AND CallDate<? THEN 1 ELSE 0 END) AS today FROM CallLog GROUP BY CRM`, ta, tb),
+    all(db, 'SELECT Name, Active FROM Team'),
+    first(db, `SELECT COUNT(*) AS rows, COUNT(DISTINCT CASE WHEN ValidMobile=1 THEN Mobile END) AS unique_,
+        SUM(CASE WHEN ValidMobile=1 THEN 0 ELSE 1 END) AS invalid, COUNT(DISTINCT BatchID) AS uploads FROM LegacyImportRows`),
+    all(db, `SELECT DISTINCT r.Mobile AS mobile, g.ID AS reviewId, g.Status AS reviewStatus FROM LegacyImportRows r
+        LEFT JOIN LegacyReview g ON g.Mobile=r.Mobile
+        WHERE r.ValidMobile=1 AND r.Mobile NOT IN (SELECT Mobile FROM Leads) LIMIT 50`),
+    first(db, `SELECT COUNT(*) AS n FROM (SELECT Mobile FROM LegacyImportRows WHERE ValidMobile=1 GROUP BY Mobile HAVING COUNT(*)>1)`)
+  ]);
+  const num = v => Number(v) || 0;
+  const active = new Map(teamRows.map(t => [String(t.Name), Number(t.Active) === 1]));
+  const calls = new Map(callCrm.map(c => [String(c.crm || ''), c]));
+  const crms = new Set([...crmRows.map(r => String(r.crm || '')), ...callCrm.map(c => String(c.crm || ''))]);
+  const perCrm = [...crms].map(name => {
+    const r = crmRows.find(x => String(x.crm || '') === name) || {}, c = calls.get(name) || {};
+    return { crm: name || '(CRM khaali)', active: active.get(name) === true, total: num(r.total), open: num(r.open), overdue: num(r.overdue), closed: num(r.closed), callEntries: num(c.entries), callsToday: num(c.today) };
+  }).sort((a, b) => b.total - a.total || b.callEntries - a.callEntries);
+
+  // Uploaded list numbers that are not a customer under the same number: explain why.
+  const missing = [];
+  for (const m of listMissing) {
+    const item = { mobile: m.mobile, reason: 'App mein customer nahi bana', now: '' };
+    if (m.reviewId && m.reviewStatus === 'pending') item.reason = 'Legacy Review mein pending hai (CALL NOW nahi dabaya)';
+    else if (m.reviewId && ['active', 'existing'].includes(m.reviewStatus)) {
+      const recId = 'REC-' + await sha256Hex(String(m.reviewId), 'legacy-recovered-lead-v1');
+      const lead = await first(db, 'SELECT Name, Mobile, CRM FROM Leads WHERE ID=?', recId);
+      if (lead) { item.reason = 'CRM ne call ke time number badal diya'; item.now = lead.Mobile + ' — ' + (lead.Name || '') + ' (' + lead.CRM + ')'; }
+    } else if (m.reviewId) item.reason = 'Legacy Review mein "' + m.reviewStatus + '" chuna gaya';
+    missing.push(item);
+  }
+  const unique = num(list && list.unique_), inApp = unique - missing.length;
+  const changed = missing.filter(x => x.now).length;
+  return {
+    asOf: fmtDateTime(new Date()),
+    customers: { total: num(leadsAgg.total), called: num(leadsAgg.called), neverCalled: num(leadsAgg.total) - num(leadsAgg.called) },
+    calls: { entries: num(callAgg.entries), today: num(callAgg.today) },
+    status: { interested: num(leadsAgg.interested), callback: num(leadsAgg.callback), visit: num(leadsAgg.visit), closed: num(leadsAgg.closed) },
+    followup: { overdue: num(leadsAgg.overdue), future: num(leadsAgg.future), missing: num(leadsAgg.noFollowup) },
+    perCrm,
+    sources: srcRows.map(r => ({ source: r.source || '(khaali)', n: num(r.n) })),
+    list: { uploads: num(list && list.uploads), rows: num(list && list.rows), repeatedNumbers: num(repeats && repeats.n), repeatRows: num(list && list.rows) - num(list && list.invalid) - unique,
+      invalid: num(list && list.invalid), unique, inApp, changed, notInApp: missing.length - changed, missing,
+      outsideList: num(leadsAgg.total) - inApp - changed }
+  };
 }

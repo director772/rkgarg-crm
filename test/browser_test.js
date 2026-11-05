@@ -60,6 +60,8 @@ $('loginUser').value = 'owner'; $('loginPass').value = 'pass1234'; $('loginForm'
 for (let i = 0; i < 100 && $('callReportContent').hidden; i++) await sleep(20);
 check(!$('callReportContent').hidden && /Saved call records/.test($('reportKpis').textContent), 'Owner Dashboard call report');
 check(/2/.test(d.querySelector('#reportKpis strong').textContent), 'owner sees 2 saved calls today');
+for (let i = 0; i < 100 && !/Kul customer/.test($('sumBody').textContent); i++) await sleep(20);
+check(/Kul customer/.test($('sumBody').textContent) && /Kul call entries/.test($('sumBody').textContent) && /CRM ke hisaab se/.test($('sumBody').textContent), 'Owner: "Pura hisaab" panel shows totals and CRM table');
 d.querySelector('[data-nav="users"]').click(); await sleep(400);
 check(/neha/.test($('usersRows').textContent), 'Manage Users list');
 // Remove Access with customer hand-over

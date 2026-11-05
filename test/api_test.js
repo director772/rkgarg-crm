@@ -152,5 +152,20 @@ const teamRow = tEx.rows.find(r => r[0] === 'Bhawna'); teamRow[1] = false;
 await sync({ op: 'row', table: 'Team', headers: tEx.headers, row: teamRow });
 check(!(await api('getBootstrapData', owner)).team.includes('Bhawna'), 'Team Active=FALSE in Sheet -> removed in app');
 
+// ---------- Owner: pura hisaab (read only) ----------
+{
+  const q1 = sql => env.DB.db.prepare(sql).get();
+  const before = JSON.stringify([q1('SELECT COUNT(*) n, SUM(RowVersion) v FROM Leads'), q1('SELECT COUNT(*) n FROM CallLog')]);
+  const d = await api('getOwnerSummary', owner);
+  const leads = q1('SELECT COUNT(*) n FROM Leads').n, calls = q1('SELECT COUNT(*) n FROM CallLog').n;
+  check(d.customers.total === leads && d.customers.called + d.customers.neverCalled === leads, 'summary: customers = app customers (' + leads + '), called + not called adds up');
+  check(d.calls.entries === calls, 'summary: call entries = CallLog (' + calls + ')');
+  check(d.status.interested + d.status.callback + d.status.visit + d.status.closed + q1("SELECT COUNT(*) n FROM Leads WHERE Status NOT IN ('interested','callback','visit','closed')").n === leads, 'summary: status buckets add up');
+  check(d.perCrm.reduce((a, r) => a + r.total, 0) === leads && d.perCrm.reduce((a, r) => a + r.callEntries, 0) === calls, 'summary: CRM table adds up to totals');
+  check(d.list.unique === d.list.inApp + d.list.changed + d.list.notInApp && d.list.inApp + d.list.changed + d.list.outsideList === leads, 'summary: uploaded list adds up: ' + JSON.stringify(d.list));
+  check(JSON.stringify([q1('SELECT COUNT(*) n, SUM(RowVersion) v FROM Leads'), q1('SELECT COUNT(*) n FROM CallLog')]) === before, 'summary changes nothing in the data');
+  check(/Not authorized/.test(await apiErr('getOwnerSummary', neha) || ''), 'CRM cannot open the owner summary');
+}
+
 console.log(`\n${ok} ok, ${bad} failed` + (BASE ? ' (real Cloudflare runtime)' : ` | DB queries: ${env.DB.queries}, transactions: ${env.DB.batches}`));
 process.exit(bad ? 1 : 0);
