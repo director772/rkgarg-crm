@@ -30,6 +30,7 @@ const WITH_SESSION = {
   getCrmScreenData: crm.getCrmScreenData,
   getDashboardExcelData: crm.getDashboardExcelData,
   getOwnerSummary: crm.getOwnerSummary,
+  getDailyMis: crm.getDailyMis,
   createLead: crm.createLead,
   createLeadAndCall: crm.createLeadAndCall,
   updateLead: crm.updateLead,
