@@ -32,8 +32,8 @@
   </header>
   <div id="globalNotice" class="notice page-error" role="alert" hidden></div>
   <section id="page-owner" class="page wrap" hidden>
-    <div class="head"><div><h1>Owner Control Room</h1><div class="sub">Fresh leads, scheduled follow-ups and customer activity</div></div><div class="actions"><button id="generateExcel" class="primary" type="button">↓ Generate Excel Report</button><button id="ownerRefresh" class="btn">↻ Refresh</button></div></div>
-    <div id="excelMessage" class="notice" role="status" hidden></div><p class="help">Excel: call report uses Call report dates; visit report uses Visit dates. All current customers and all-time visits are included separately.</p>
+    <div class="head"><div><h1>Owner Control Room</h1><div class="sub">Fresh leads, scheduled follow-ups and customer activity</div></div><div class="actions"><button id="generateExcel" class="primary" type="button">↓ Excel Report</button><button id="generatePdf" class="primary" type="button">↓ Daily MIS (PDF)</button><button id="ownerRefresh" class="btn">↻ Refresh</button></div></div>
+    <div id="excelMessage" class="notice" role="status" hidden></div><p class="help">Excel aur Daily MIS (PDF) neeche Call report ki From / To date ka hisaab dete hain. Excel ka pehla sheet "Daily MIS" hai. Visit wale sheet Visit report ki date se bante hain.</p>
     <div class="panel" id="sumPanel"><h2>📊 Pura hisaab — sab customers</h2><p class="help" id="sumAsOf">Loading…</p><div id="sumBody"></div></div>
     <div class="panel">
       <h2>Call report</h2>
@@ -87,7 +87,7 @@
       <hr class="divider">
       <div id="conflictBox" class="notice warn draftbox" hidden><strong>Latest details loaded. Your earlier response is preserved below.</strong><pre id="conflictDraft"></pre><button id="restoreCallDraft" class="btn" type="button">Use my earlier response after review</button></div>
       <form id="callForm"><fieldset id="callFields"><h3>Customer Response</h3>
-        <div id="responseButtons" class="responses"><button type="button" class="resp" data-response="Interested">Interested</button><button type="button" class="resp" data-response="Call Later">Call Later</button><button type="button" class="resp" data-response="Not Picked">Not Picked</button><button type="button" class="resp" data-response="Catalogue Sent">Catalogue Sent</button><button type="button" class="resp" data-response="Visit Scheduled">Visit Scheduled</button><button type="button" class="resp" data-response="No Requirement">No Requirement</button></div>
+        <div id="responseButtons" class="responses"><button type="button" class="resp" data-response="Interested">Interested</button><button type="button" class="resp" data-response="Call Later">Call Later</button><button type="button" class="resp" data-response="Not Picked">Not Picked</button><button type="button" class="resp" data-response="Catalogue Sent">Catalogue Sent</button><button type="button" class="resp" data-response="Price Poocha">Price Poocha</button><button type="button" class="resp" data-response="Visit Scheduled">Visit Scheduled</button><button type="button" class="resp" data-response="No Requirement">No Requirement</button></div>
         <div id="callVisitDateBox" class="full" hidden><label for="callVisitDate">Customer visit date — kis din aayega? *</label><input id="callVisitDate" type="date" disabled><p class="help">Confirmed shop visit date. Next follow-up neeche alag bharein.</p></div><div class="formgrid"><div><label for="nextAction">Next action</label><select id="nextAction"><option>Call</option><option>WhatsApp</option><option>Catalogue Follow-up</option><option>Visit Reminder</option><option>Close Lead</option></select></div><div><label for="nextDate">Next follow-up — India time (IST)</label><input type="datetime-local" id="nextDate"></div><div class="full"><label for="callNote">Note for this call</label><textarea id="callNote" maxlength="3000" placeholder="Blank rakhne se existing note preserve rahega"></textarea></div></div>
         <p class="help">Open leads ke liye future follow-up required hai. No Requirement select karne par lead close hogi.</p><button type="submit" id="saveCallBtn" class="primary wide">SAVE &amp; NEXT CUSTOMER</button>
       </fieldset></form>
@@ -103,7 +103,7 @@
       <div><label for="nMobile">Mobile number *</label><input id="nMobile" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required placeholder="10 digit mobile"></div><div><label for="nName">Customer / firm name *</label><input id="nName" maxlength="200" required></div><div id="nCityBox"><label for="nCity">City *</label><input id="nCity" maxlength="150" required></div><div><label for="nSource">Source *</label><select id="nSource" required><option value="">Select source</option><option>WhatsApp</option><option>Meta Ad</option><option>Reference</option><option>Walk-in</option><option>Existing Customer</option><option>Other</option></select></div><div id="nProductBox"><label for="nProduct">Product / requirement *</label><input id="nProduct" maxlength="500" required></div><div><label for="nCrm">Assign CRM *</label><select id="nCrm" required></select></div><div class="full"><label for="nNote">Note (optional)</label><textarea id="nNote" maxlength="3000"></textarea></div>
     </div>
     <div id="newCallSection"><hr class="divider"><h3>First call response</h3><div class="formgrid">
-      <div><label for="nResponse">Customer response *</label><select id="nResponse"><option value="">Select response</option><option>Interested</option><option>Call Later</option><option>Not Picked</option><option>Catalogue Sent</option><option>Visit Scheduled</option><option>No Requirement</option></select></div>
+      <div><label for="nResponse">Customer response *</label><select id="nResponse"><option value="">Select response</option><option>Interested</option><option>Call Later</option><option>Not Picked</option><option>Catalogue Sent</option><option>Price Poocha</option><option>Visit Scheduled</option><option>No Requirement</option></select></div>
       <div id="newVisitDateBox" class="full" hidden><label for="newVisitDate">Customer visit date — kis din aayega? *</label><input id="newVisitDate" type="date" disabled><p class="help">Confirmed shop visit date. Next follow-up neeche alag bharein.</p></div><div><label for="nAction">Next action *</label><select id="nAction"><option>Call</option><option>WhatsApp</option><option>Catalogue Follow-up</option><option>Visit Reminder</option><option>Close Lead</option></select></div>
       <div><label for="nFollowup">Next follow-up — India time (IST) *</label><input id="nFollowup" type="datetime-local"></div>
     </div><p class="help">No Requirement se lead close hogi. Baaki responses ke liye future follow-up required hai. Upar ka optional Note call history mein bhi save hoga.</p></div>
@@ -124,7 +124,7 @@
       <div><label for="eCrm">Assigned CRM *</label><select id="eCrm" required></select><p class="help">Existing lead reassign sirf Owner kar sakta hai.</p></div>
       <div class="full"><label for="eNote">Note (optional)</label><textarea id="eNote" maxlength="3000"></textarea><p class="help">Yahan Note blank karke Save karne se lead ka current note clear hoga; purani call history rahegi.</p></div>
     </div><div id="legacyEditCall" hidden><hr class="divider"><h3>Call response</h3><div class="formgrid">
-<div><label for="eResponse">Customer response *</label><select id="eResponse"><option value="">Select response</option><option>Interested</option><option>Call Later</option><option>Not Picked</option><option>Catalogue Sent</option><option>Visit Scheduled</option><option>No Requirement</option></select></div>
+<div><label for="eResponse">Customer response *</label><select id="eResponse"><option value="">Select response</option><option>Interested</option><option>Call Later</option><option>Not Picked</option><option>Catalogue Sent</option><option>Price Poocha</option><option>Visit Scheduled</option><option>No Requirement</option></select></div>
 <div><label for="eAction">Next action *</label><select id="eAction"><option>Call</option><option>WhatsApp</option><option>Catalogue Follow-up</option><option>Visit Reminder</option><option>Close Lead</option></select></div>
 <div><label for="eFollowup">Next follow-up — India time (IST) *</label><input id="eFollowup" type="datetime-local"></div>
 <div id="editVisitDateBox" hidden><label for="editVisitDate">Customer visit date *</label><input id="editVisitDate" type="date" disabled></div>
@@ -489,7 +489,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     if(!S.team.includes(payload.crm))throw new Error('Select an active CRM team member.');return payload;
   }
   function validateCallFields(response,action,localDate,note){
-    if(!['Interested','Call Later','Not Picked','Catalogue Sent','Visit Scheduled','No Requirement'].includes(response))throw new Error('Select customer response first.');
+    if(!['Interested','Call Later','Not Picked','Catalogue Sent','Price Poocha','Visit Scheduled','No Requirement'].includes(response))throw new Error('Select customer response first.');
     const closed=response==='No Requirement',followup=closed?'':fromISTInput(localDate);
     if(!closed&&(!followup||new Date(followup)<=new Date()))throw new Error('Choose a future follow-up date and time (IST).');
     if(!closed&&(!action||action==='Close Lead'))throw new Error('Choose an open next action.');
@@ -904,7 +904,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const add=(name,body)=>files.push({name:enc.encode(name),data:enc.encode(body)}),ns='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
     const col=n=>{let s='';for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;};
     sheets.forEach((s,i)=>{if(s.rows.length>1048576)throw Error('Report exceeds Excel row limit. Select a shorter date range.');const width=Math.max(1,...s.rows.slice(0,10).map(r=>r.length));
-      add('xl/worksheets/sheet'+(i+1)+'.xml','<worksheet xmlns="'+ns+'"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+Array.from({length:width},(_,j)=>'<col min="'+(j+1)+'" max="'+(j+1)+'" width="'+(j===0?27:24)+'" customWidth="1"/>').join('')+'</cols><sheetData>'+s.rows.map((r,n)=>'<row r="'+(n+1)+'">'+r.map((v,j)=>{const ref=col(j)+(n+1),style=n===0?' s="1"':'';return typeof v==='number'&&Number.isFinite(v)?'<c r="'+ref+'"'+style+'><v>'+v+'</v></c>':'<c r="'+ref+'" t="inlineStr"'+style+'><is><t xml:space="preserve">'+xml(v)+'</t></is></c>';}).join('')+'</row>').join('')+'</sheetData><autoFilter ref="A1:'+col(width-1)+Math.max(1,s.rows.length)+'"/></worksheet>');
+      const bold=new Set(s.bold||[0]);add('xl/worksheets/sheet'+(i+1)+'.xml','<worksheet xmlns="'+ns+'"><sheetViews><sheetView workbookViewId="0">'+(s.plain?'':'<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>')+'</sheetView></sheetViews><cols>'+Array.from({length:width},(_,j)=>'<col min="'+(j+1)+'" max="'+(j+1)+'" width="'+(j===0?27:24)+'" customWidth="1"/>').join('')+'</cols><sheetData>'+s.rows.map((r,n)=>'<row r="'+(n+1)+'">'+r.map((v,j)=>{const ref=col(j)+(n+1),style=bold.has(n)?' s="1"':'';return typeof v==='number'&&Number.isFinite(v)?'<c r="'+ref+'"'+style+'><v>'+v+'</v></c>':'<c r="'+ref+'" t="inlineStr"'+style+'><is><t xml:space="preserve">'+xml(v)+'</t></is></c>';}).join('')+'</row>').join('')+'</sheetData>'+(s.plain?'':'<autoFilter ref="A1:'+col(width-1)+Math.max(1,s.rows.length)+'"/>')+'</worksheet>');
     });
     add('xl/styles.xml','<styleSheet xmlns="'+ns+'"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
     add('xl/workbook.xml','<workbook xmlns="'+ns+'" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map((s,i)=>'<sheet name="'+xml(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>');
@@ -920,6 +920,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   function crmExcelSheets(d){
     const calls=d.calls,v=d.visits,live=d.dashboard,range=v.items.filter(x=>x.date&&x.date>=v.fromDate&&x.date<=v.toDate),sheets=[];
     const add=(name,rows)=>sheets.push({name,rows}),stat=(name,list)=>[name,list.length,list.filter(x=>['Done','Converted'].includes(x.status)).length,list.filter(x=>x.status==='Cancelled').length,list.filter(x=>x.status==='Converted').length];
+    if(d.mis)sheets.push(misSheet(d.mis));
     add('Report Info',[['Setting','Value'],['Generated at (IST)',d.generatedAt],['Call dates',reportDateLabel(calls.fromDate)+' to '+reportDateLabel(calls.toDate)],['Visit dates',reportDateLabel(v.fromDate)+' to '+reportDateLabel(v.toDate)],['Scope','All call rows for selected dates; all current customers and visits. Screen search and pagination do not limit export.'],['Visit totals','Repeated visits count separately; historical scheduled customers without a visit record appear once.'],['Date pending','Included in all-time totals; excluded from dated reports.'],['Converted','Customer purchased goods; also counted as Visit Done.'],['Week','Tuesday to Sunday'],['Times','India time; displayed as dd-mmm-yy'],...Object.entries(calls.warnings||{}).map(([k,n])=>['Data check: '+k,n])]);
     add('Dashboard Summary',[['Metric','Value'],['Call records (selected dates)',calls.totals.records],['Unique customers (selected dates)',calls.totals.uniqueCustomers],['Not Picked (selected dates)',calls.totals.notPicked],['Other responses (selected dates)',calls.totals.otherResponses],['First call pending',live.kpis.freshPending],['Later today',live.kpis.callbacksDue],['Overdue calls',live.kpis.overdue],['Future follow-ups',live.kpis.upcoming],['Interested',live.kpis.interested],['Customers called today',live.kpis.callsDoneToday],['Legacy review pending',live.legacyPending],['Follow-up missing',live.kpis.unscheduled],['Visits scheduled today',v.counts.scheduled],['Of these arrived',v.counts.arrived],['Still to arrive today',v.counts.remaining],['All arrivals today',v.counts.doneToday],['Overdue visits',v.counts.overdue],...['week','nextWeek','month'].map(k=>[{week:'This week pending visits',nextWeek:'Next week pending visits',month:'This month pending visits'}[k],v.items.filter(x=>visitMatches(x,'period:'+k,'','',v.today)).length])]);
     add('Call Details',[['Call time (IST)','Customer','Mobile','CRM','Response','Next action','Next follow-up','Note'],...calls.items.map(x=>[x.callDisplay,x.name,String(x.mobile||''),x.crm,x.response,x.nextActionType,x.nextFollowupDisplay,x.note])]);
@@ -933,6 +934,63 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     add('Live Customers',[['Customer','Mobile','City','CRM','Priority','Response','Last call','Next action','Next follow-up','Note'],...live.queue.map(x=>[x.name,String(x.mobile||''),x.city,x.crm,x.score,x.disposition,x.lastCallDisplay,x.nextActionType,x.nextFollowupDisplay,x.note])]);
     add('Live CRM Performance',[['CRM','First call pending','Later today','Overdue','Customers called today'],...live.team.map(crm=>{const x=live.perf[crm]||{};return [crm,x.fresh||0,x.due||0,x.overdue||0,x.done||0];})]);return sheets;
   }
+  /* ---------- Daily MIS (WhatsApp wala format) — Excel sheet + PDF ---------- */
+  const MIS_LEAD=[['New Leads','newLeads'],['Called','called'],['Connected','connected'],['RNR','rnr'],['HWC'],['Quote Shared','quote'],['Orders Confirmed','orders'],['Catalogue shared','catalogue']];
+  const MIS_FOLLOW=[['Follow-up Today','followToday'],['Follow-up Pending','followPending'],['Interested for Future','future'],['Not Interested','notInterested']];
+  function misDateLabel(m){return m.fromDate===m.toDate?reportDateLabel(m.fromDate):reportDateLabel(m.fromDate)+' se '+reportDateLabel(m.toDate);}
+  function misSheet(m){
+    const names=m.blocks.map(b=>b.name==='Total'?'Total (sab CRM)':b.name),val=k=>m.blocks.map(b=>Number(b[k])||0),rows=[],bold=[];
+    const row=(r,b)=>{if(b)bold.push(rows.length);rows.push(r);};
+    row(['RK GARG JEANS — DAILY MIS'],true);row(['Date: '+misDateLabel(m)]);row([]);
+    row(['LEAD & SALES',...names],true);
+    MIS_LEAD.forEach(([label,k])=>{if(label==='HWC'){row(['Hot',...val('hot')]);row(['Warm',...val('warm')]);row(['Cold',...val('cold')]);}else row([label,...val(k)]);});
+    row([]);row(['FOLLOW-UP STATUS',...names],true);
+    MIS_FOLLOW.forEach(([label,k])=>row([label,...val(k)]));
+    row([]);row(['Report bana: '+m.asOfDisplay+' (India time)']);
+    row(['Follow-up Today / Pending = abhi ka haal (band customer chhod ke). Baaki sab number upar ki date ke hain.']);
+    row(['Hot = Visit Scheduled · Warm = Interested / Catalogue Sent / Price Poocha · Cold = Call Later · RNR = phone nahi uthaya']);
+    return {name:'Daily MIS',rows,bold,plain:true};
+  }
+  // Bina kisi library ka chhota PDF: har page pe ek block (pehle Total, phir har CRM)
+  function misPdf(m){
+    const W=340,H=430,win=t=>{let o='';for(const ch of String(t)){const c=ch.codePointAt(0);const map={0x2014:0x97,0x2022:0x95,0x2013:0x96,0x20B9:0x52};let v=map[c]!=null?map[c]:(c<256?c:0x3F);if(c===0x20B9)o+='Rs';else if(v===0x28||v===0x29||v===0x5C)o+='\\'+String.fromCharCode(v);else if(v<32||v>126)o+='\\'+v.toString(8).padStart(3,'0');else o+=String.fromCharCode(v);}return o;};
+    const pages=m.blocks.map(b=>{
+      const n=k=>String(Number(b[k])||0),lines=[];let y=H-44;const L=(t,f,sz,gap,x)=>{lines.push('BT /'+f+' '+sz+' Tf '+(x||24)+' '+y+' Td ('+win(t)+') Tj ET');y-=gap;};
+      L('RK GARG JEANS — DAILY MIS','F2',13,20);
+      L((b.name==='Total'?'Sab CRM milake':'CRM: '+b.name)+'  ·  '+misDateLabel(m),'F1',9,26);
+      L('LEAD & SALES','F2',11,22);
+      const item=t=>L('•  '+t,'F1',10.5,17,32);
+      item('New Leads: '+n('newLeads'));item('Called: '+n('called'));item('Connected: '+n('connected'));item('RNR: '+n('rnr'));
+      item('Hot: '+n('hot')+'  |  Warm: '+n('warm')+'  |  Cold: '+n('cold'));item('Quote Shared: '+n('quote'));item('Orders Confirmed: '+n('orders'));item('Catalogue shared: '+n('catalogue'));
+      y-=10;L('FOLLOW-UP STATUS','F2',11,22);
+      item('Follow-up Today: '+n('followToday'));item('Follow-up Pending: '+n('followPending'));item('Interested for Future: '+n('future'));item('Not Interested: '+n('notInterested'));
+      y=30;L('Report bana: '+m.asOfDisplay+' IST  ·  Follow-up = abhi ka haal','F1',7,10);
+      return '0.95 0.97 0.95 rg 12 12 '+(W-24)+' '+(H-24)+' re f 0 0 0 rg\n'+lines.join('\n');
+    });
+    const objs=[],kids=[];
+    objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+    objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+    objs[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+    pages.forEach((c,i)=>{const p=5+i*2;kids.push(p+' 0 R');objs[p]='<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+'] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents '+(p+1)+' 0 R >>';objs[p+1]='<< /Length '+c.length+' >>\nstream\n'+c+'\nendstream';});
+    objs[2]='<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+kids.length+' >>';
+    let out='%PDF-1.4\n%âãÏÓ\n';const offs=[];
+    for(let i=1;i<objs.length;i++){offs[i]=out.length;out+=i+' 0 obj\n'+objs[i]+'\nendobj\n';}
+    const x=out.length;out+='xref\n0 '+objs.length+'\n0000000000 65535 f \n'+offs.slice(1).map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+objs.length+' /Root 1 0 R >>\nstartxref\n'+x+'\n%%EOF';
+    const bytes=new Uint8Array(out.length);for(let i=0;i<out.length;i++)bytes[i]=out.charCodeAt(i)&255;
+    return new Blob([bytes],{type:'application/pdf'});
+  }
+  function crmDownload(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+  let pdfBusy=false;
+  $('generatePdf').addEventListener('click',async()=>{
+    if(pdfBusy||S.write||S.session?.role!=='Owner')return;
+    const from=$('reportFrom').value,to=$('reportTo').value;
+    if(!from||!to||from>to){notice('excelMessage','Call report mein sahi From / To date chuno.','err');return;}
+    pdfBusy=true;$('generatePdf').disabled=true;const epoch=S.epoch;notice('excelMessage','Daily MIS PDF ban raha hai…','info');
+    try{const m=await rpc('getDailyMis',[from,to]);if(epoch!==S.epoch)return;
+      crmDownload(misPdf(m),'Daily_MIS_'+(from===to?from:from+'_to_'+to)+'.pdf');
+      notice('excelMessage','PDF download shuru — '+m.blocks.length+' page (pehla Total, phir har CRM).','ok');
+    }catch(e){if(epoch===S.epoch)report('excelMessage',e);}finally{pdfBusy=false;$('generatePdf').disabled=false;}
+  });
   let excelBusy=false;
   $('generateExcel').addEventListener('click',async()=>{
     if(excelBusy||S.write||S.session?.role!=='Owner')return;
