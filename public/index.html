@@ -951,10 +951,10 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     row(['Hot = Visit Scheduled · Warm = Interested / Catalogue Sent / Price Poocha · Cold = Call Later · RNR = phone nahi uthaya']);
     return {name:'Daily MIS',rows,bold,plain:true};
   }
-  // Bina kisi library ka chhota PDF: har page pe ek block (pehle Total, phir har CRM)
+  // Bina kisi library ka chhota PDF: ek page, sirf Total (sab CRM milake)
   function misPdf(m){
     const W=340,H=430,win=t=>{let o='';for(const ch of String(t)){const c=ch.codePointAt(0);const map={0x2014:0x97,0x2022:0x95,0x2013:0x96,0x20B9:0x52};let v=map[c]!=null?map[c]:(c<256?c:0x3F);if(c===0x20B9)o+='Rs';else if(v===0x28||v===0x29||v===0x5C)o+='\\'+String.fromCharCode(v);else if(v<32||v>126)o+='\\'+v.toString(8).padStart(3,'0');else o+=String.fromCharCode(v);}return o;};
-    const pages=m.blocks.map(b=>{
+    const pages=m.blocks.filter(b=>b.name==='Total').map(b=>{
       const n=k=>String(Number(b[k])||0),lines=[];let y=H-44;const L=(t,f,sz,gap,x)=>{lines.push('BT /'+f+' '+sz+' Tf '+(x||24)+' '+y+' Td ('+win(t)+') Tj ET');y-=gap;};
       L('RK GARG JEANS — DAILY MIS','F2',13,20);
       L((b.name==='Total'?'Sab CRM milake':'CRM: '+b.name)+'  ·  '+misDateLabel(m),'F1',9,26);
@@ -988,7 +988,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     pdfBusy=true;$('generatePdf').disabled=true;const epoch=S.epoch;notice('excelMessage','Daily MIS PDF ban raha hai…','info');
     try{const m=await rpc('getDailyMis',[from,to]);if(epoch!==S.epoch)return;
       crmDownload(misPdf(m),'Daily_MIS_'+(from===to?from:from+'_to_'+to)+'.pdf');
-      notice('excelMessage','PDF download shuru — '+m.blocks.length+' page (pehla Total, phir har CRM).','ok');
+      notice('excelMessage','PDF download shuru — sab CRM ka Total.','ok');
     }catch(e){if(epoch===S.epoch)report('excelMessage',e);}finally{pdfBusy=false;$('generatePdf').disabled=false;}
   });
   let excelBusy=false;
