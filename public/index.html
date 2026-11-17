@@ -199,8 +199,8 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 </script>
 <!-- Smart CRM: single-click phone QR. Browser-only; no Sheet writes. -->
 <style>
-button.crmPhoneQR{appearance:none;background:transparent;border:0;border-radius:0;padding:0;margin:0;color:inherit;font:inherit;letter-spacing:inherit;line-height:inherit;text-align:inherit;cursor:pointer;vertical-align:baseline;min-width:0;min-height:0}
-button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}
+button.crmPhoneQR{appearance:none;background:transparent;border:0;border-radius:0;padding:0;margin:0;color:#1d4ed8;font-weight:700;text-decoration:underline;font:inherit;letter-spacing:inherit;line-height:inherit;text-align:inherit;cursor:pointer;vertical-align:baseline;min-width:0;min-height:0}
+button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}.crmPhoneQR{font-weight:700;white-space:nowrap}.crmPhoneQR:hover{color:#15803d}
 #crmPhoneQrDialog{border:1px solid #dce3ed;border-radius:16px;background:#fff;color:#17253b;padding:24px;width:min(380px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-shadow:0 18px 70px #0005;text-align:center}
 #crmPhoneQrDialog::backdrop{background:rgba(10,20,35,.6)}
 #crmPhoneQrDialog h2{font-size:20px;margin:0 0 8px}#crmPhoneQrDialog p{margin:8px 0;overflow-wrap:anywhere}#crmPhoneQrNumber{font-size:22px;font-weight:700}
@@ -208,7 +208,9 @@ button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}
 #crmPhoneQrClose{background:#245be8;color:white;border:0;border-radius:8px;padding:10px 24px;font:inherit;cursor:pointer;margin-top:12px}
 </style>
 <dialog id="crmPhoneQrDialog" aria-labelledby="crmPhoneQrTitle" aria-describedby="crmPhoneQrHelp">
-<h2 id="crmPhoneQrTitle">Scan to dial</h2><p id="crmPhoneQrName"></p><p id="crmPhoneQrNumber"></p>
+<h2 id="crmPhoneQrTitle">Call karo</h2><p id="crmPhoneQrName"></p><p id="crmPhoneQrNumber"></p>
+<a id="crmPhoneQrCall" href="#" style="display:block;background:#15803d;color:#fff;text-align:center;font-size:17px;font-weight:800;padding:14px;border-radius:11px;text-decoration:none;margin:4px 0 8px">📞 Call lagao</a>
+<p style="font-size:12px;color:#667085;margin:0 0 14px;line-height:1.5">Computer pe: call aapke phone se lagegi (Windows "Phone Link" se, ek baar setup). Setup nahi hai to neeche QR phone se scan karo.</p>
 <div id="crmPhoneQrModes" role="group" aria-label="QR format"><button type="button" id="crmPhoneQrDial" aria-pressed="true">Dial QR</button><button type="button" id="crmPhoneQrPlain" aria-pressed="false">Number only (Lens)</button></div>
 <div id="crmPhoneQrCanvas" role="img" aria-label="Phone number QR code"></div>
 <p id="crmPhoneQrHelp">Phone Camera / Google Lens se scan karein. Call option par tap karke dialer kholein; call button phone par dabayein.</p>
@@ -227,9 +229,11 @@ button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}
     if(raw.startsWith('+')&&/^[1-9]\d{7,14}$/.test(digits))return '+'+digits;
     return '';
   }
+  // Mobile pe number dabate hi dialer khulta hai; computer pe Call / QR wala chhota box.
+  const isPhoneDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches);
   window.crmPhoneQrMarkup=function(mobile,name){
     const number=normalizePhone(mobile);if(!number)return escapeText(mobile||'—');
-    return '<button type="button" class="crmPhoneQR" data-crm-phone-qr="'+escapeText(number)+'" data-crm-phone-name="'+escapeText(name||'')+'" aria-label="Show phone QR for '+escapeText(mobile)+'" title="Click to show QR">'+escapeText(mobile)+'</button>';
+    return '<button type="button" class="crmPhoneQR" data-crm-phone-qr="'+escapeText(number)+'" data-crm-phone-name="'+escapeText(name||'')+'" aria-label="Call '+escapeText(mobile)+'" title="Dabao = call">📞 '+escapeText(mobile)+'</button>';
   };
   const dialog=document.getElementById('crmPhoneQrDialog'),box=document.getElementById('crmPhoneQrCanvas'),close=document.getElementById('crmPhoneQrClose');let previousFocus=null,currentPhone='',qrMode='dial';
   // Render the pinned QRCode.js matrix as SVG, with an embedded 4-module
@@ -262,13 +266,14 @@ button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}
     currentPhone=phone;qrMode='dial';previousFocus=button;
     document.getElementById('crmPhoneQrName').textContent=button.dataset.crmPhoneName||'';
     document.getElementById('crmPhoneQrNumber').textContent=phone;
-    if(!dialog.open)dialog.showModal();renderPhoneQr();close.focus();
+    document.getElementById('crmPhoneQrCall').href='tel:'+phone;
+    if(!dialog.open)dialog.showModal();renderPhoneQr();document.getElementById('crmPhoneQrCall').focus();
   }
   document.getElementById('crmPhoneQrDial').addEventListener('click',()=>{qrMode='dial';renderPhoneQr();});
   document.getElementById('crmPhoneQrPlain').addEventListener('click',()=>{qrMode='plain';renderPhoneQr();});
   document.addEventListener('click',function(event){
     const button=event.target.closest&&event.target.closest('[data-crm-phone-qr]');if(!button)return;
-    event.preventDefault();event.stopPropagation();openPhoneQr(button);
+    event.preventDefault();event.stopPropagation();if(isPhoneDevice){const p=normalizePhone(button.dataset.crmPhoneQr);if(p)window.location.href='tel:'+p;return;}openPhoneQr(button);
   },true);
   close.addEventListener('click',()=>dialog.close());
   dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();});
