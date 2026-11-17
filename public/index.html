@@ -986,7 +986,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
       '<div id="ohVisitKpi" class="ohKwrap"></div></div>';
     // Daily MIS
     const L=(label,key,n,arg)=>ohBtn(key,arg,'<span>• '+esc(label)+'</span><strong>'+esc(n)+'</strong>','ohMisLine');
-    h+='<section class="ohCard ohMis" aria-label="Daily MIS"><div class="head" style="margin:0"><div><h2>RK GARG JEANS — DAILY MIS</h2><div class="sub">'+esc(ohDateText())+' · har line pe dabao: <b>number kahan se aaya</b> aur <b>kaun-kaun se customer</b></div></div><button type="button" class="primary" data-oh-pdf>↓ Is format ka PDF (customer list ke saath)</button></div>'+
+    h+='<section class="ohCard ohMis" aria-label="Daily MIS"><div class="head" style="margin:0"><div><h2>RK GARG JEANS — DAILY MIS</h2><div class="sub">'+esc(ohDateText())+' · har line pe dabao: <b>number kahan se aaya</b> aur <b>kaun-kaun se customer</b></div></div><button type="button" class="primary" data-oh-pdf>↓ Is format ka PDF (ek page)</button></div>'+
       '<div class="ohMisGrid"><div><div class="ohMisHead">LEAD &amp; SALES</div>'+L('New Leads','newLeads',ohN(T.newLeads))+L('Called','called',ohN(T.called))+L('Connected','connected',ohN(T.connected))+L('RNR','rnr',ohN(T.rnr))+
       '<div class="ohMisLine" style="cursor:default;flex-wrap:wrap;justify-content:flex-start">• '+ohBtn('hot','','Hot: <b>'+ohN(T.hot)+'</b>','ohChipBtn')+ohBtn('warm','','Warm: <b>'+ohN(T.warm)+'</b>','ohChipBtn')+ohBtn('cold','','Cold: <b>'+ohN(T.cold)+'</b>','ohChipBtn')+'</div>'+
       L('Quote Shared','quote',ohN(T.quote))+L('Orders Confirmed','orders',ohN(T.orders))+L('Catalogue shared','catalogue',ohN(T.catalogue))+'</div>'+
@@ -1134,45 +1134,24 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   }
   // Daily MIS PDF (bina library): page 1 = format + "kahan se aaya" + milaan; aage = har line ke customer.
   function misPdf(d){
-    const W=595,H=842,M=40,m=d.mis||{},L=d.lists||{};
-    const win=t=>{let o='';for(const ch of String(t==null?'':t)){const c=ch.codePointAt(0);const map={0x2014:0x97,0x2022:0x95,0x2013:0x96,0x201C:0x93,0x201D:0x94,0x2018:0x91,0x2019:0x92,0x2026:0x85,0x2212:0x2D,0x26A0:0x21};let v=map[c]!=null?map[c]:(c<256?c:0x3F);if(c===0x20B9){o+='Rs';continue;}if(v===0x28||v===0x29||v===0x5C)o+='\\'+String.fromCharCode(v);else if(v<32||v>126)o+='\\'+v.toString(8).padStart(3,'0');else o+=String.fromCharCode(v);}return o;};
-    const fit=(t,n)=>{t=String(t==null?'':t).replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n-1)+'…':t;};
-    const wrap=(t,n)=>{const words=String(t||'').split(/\s+/),out=[];let line='';words.forEach(w=>{if((line+' '+w).trim().length>n){if(line)out.push(line);line=w;}else line=(line+' '+w).trim();});if(line)out.push(line);return out.length?out:[''];};
-    const pages=[];let ops=[],y=0,pageNo=0;
-    const txt=(x,yy,t,f,sz,rgb)=>ops.push((rgb?rgb+' rg ':'0.06 0.09 0.16 rg ')+'BT /'+(f||'F1')+' '+sz+' Tf '+x.toFixed(1)+' '+yy.toFixed(1)+' Td ('+win(t)+') Tj ET');
-    const rtxt=(xr,yy,t,f,sz)=>{const w=String(t).length*sz*(f==='F2'?0.56:0.5);txt(xr-w,yy,t,f,sz);};
-    const rect=(x,yy,w,h,rgb)=>ops.push(rgb+' rg '+x+' '+yy.toFixed(1)+' '+w+' '+h.toFixed(1)+' re f');
-    const hline=(x1,x2,yy,g)=>ops.push((g||'0.80')+' G 0.6 w '+x1+' '+yy.toFixed(1)+' m '+x2+' '+yy.toFixed(1)+' l S');
-    const newPage=()=>{if(ops.length)pages.push(ops.join('\n'));ops=[];pageNo++;y=H-M;
-      txt(M,y-4,'RK GARG JEANS — DAILY MIS','F2',pageNo===1?17:11);rtxt(W-M,y-4,'Page '+pageNo,'F1',8);
-      txt(M,y-(pageNo===1?22:17),d.dateText+'  ·  Sab CRM milake  ·  report bani '+d.asOfDisplay+' IST','F1',8.5,'0.28 0.33 0.41');
-      y-=pageNo===1?32:26;hline(M,W-M,y,'0.06');y-=14;};
-    const need=h=>{if(y-h<M+24)newPage();};
-    newPage();
-    // ----- Page 1: format -----
-    txt(M,y,'Har line ke saamne: number kahan se aaya, aur uske customer kis hisse (A, B, C…) me hain.','F1',9,'0.2 0.25 0.33');y-=18;
-    const sec=[],add=(code,title,rule,key)=>{const rows=L[key]||[];if(!rows.length)return '— koi nahi';const letter=String.fromCharCode(65+sec.length);sec.push({letter,title,rule,rows});return letter+' (page aage)';};
-    const refs={warm:add('warm','Warm — '+(L.warm||[]).length+' customer','Aakhri jawab: Interested / Catalogue Sent / Price Poocha','warm'),cold:add('cold','Cold — '+(L.cold||[]).length+' customer','Aakhri jawab: Call Later','cold'),hot:add('hot','Hot — '+(L.hot||[]).length+' customer','Aakhri jawab: Visit Scheduled','hot'),notint:add('notint','Not Interested — '+(L.notint||[]).length+' customer','Aakhri jawab: No Requirement','notint'),rnr:add('rnr','RNR (phone nahi uthaya) — '+(L.rnr||[]).length+' customer','Is din ki saari call Not Picked','rnr'),future:add('future','Interested for Future — '+(L.future||[]).length+' customer','Baat hui, band nahi, agli call aaj ke baad','future'),quote:add('quote','Quote Shared — '+(L.quote||[]).length+' customer','Jawab: Price Poocha','quote'),catalogue:add('catalogue','Catalogue shared — '+(L.catalogue||[]).length+' customer','Jawab: Catalogue Sent','catalogue'),orders:add('orders','Orders Confirmed — '+(L.orders||[]).length+' customer','Visit pe Converted — maal liya','orders'),newLeads:add('newLeads','New Leads — '+(L.newLeads||[]).length+' customer','In dates me bane customer','newLeads'),followToday:add('followToday','Follow-up Today — '+(L.followToday||[]).length+' customer','Aaj ki agli call, time abhi baaki','followToday'),late:add('late','Follow-up Pending (late) — '+(L.late||[]).length+' customer','Agli call ka time nikal gaya — sabse purane pehle','late')};
-    const conn=[refs.warm,refs.cold,refs.hot,refs.notint].filter(r=>r[0]!=='—').map(r=>r[0]).join(' + ')||'—';
-    const R=[['h','LEAD & SALES'],['New Leads',m.newLeads,'Customer list me jinki "bana" date in dates ki hai',refs.newLeads],['Called',m.called,'Is din ki saari call entries, har customer ek baar · Called = Connected + RNR',[conn,refs.rnr[0]==='—'?'':refs.rnr[0]].filter(x=>x&&x!=='—').join(' + ')||'—'],['Connected',m.connected,'Called me se jinka koi jawab "Not Picked" ke alawa',conn],['RNR',m.rnr,'Jinki is din ki saari call "Not Picked" · Called − Connected',refs.rnr],['Hot',m.hot,'Aakhri jawab "Visit Scheduled"',refs.hot],['Warm',m.warm,'Aakhri jawab Interested / Catalogue Sent / Price Poocha',refs.warm],['Cold',m.cold,'Aakhri jawab "Call Later"',refs.cold],['Quote Shared',m.quote,'Jawab "Price Poocha"',refs.quote],['Orders Confirmed',m.orders,'Visit pe "Converted — maal liya" in dates me',refs.orders],['Catalogue shared',m.catalogue,'Jawab "Catalogue Sent"',refs.catalogue],
-      ['h','FOLLOW-UP STATUS'],['Follow-up Today',m.followToday,'Chalu customer, agli call aaj, time abhi baaki',refs.followToday],['Follow-up Pending',m.followPending,'Chalu customer, agli call ka time nikal gaya (late)',refs.late],['Interested for Future',m.future,'Connected, band nahi, agli call aaj ke baad',refs.future],['Not Interested',m.notInterested,'Aakhri jawab "No Requirement"',refs.notint]];
-    rect(M,y-4,W-2*M,16,'0.06 0.09 0.16');txt(M+6,y+1,'Line','F2',8.5,'1 1 1');txt(M+128,y+1,'Number','F2',8.5,'1 1 1');txt(M+182,y+1,'Kahan se aaya (kaise gina)','F2',8.5,'1 1 1');txt(M+420,y+1,'Customer list','F2',8.5,'1 1 1');y-=18;
-    R.forEach(r=>{if(r[0]==='h'){rect(M,y-4,W-2*M,15,'0.94 0.95 0.97');txt(M+6,y,r[1],'F2',9);y-=17;return;}
-      const lines=wrap(r[2],52),h=Math.max(1,lines.length)*10.5+5;txt(M+6,y,r[0],'F2',9);rtxt(M+168,y,String(r[1]==null?0:r[1]),'F2',10.5);lines.forEach((l,i)=>txt(M+182,y-i*10.5,l,'F1',8.2,'0.2 0.25 0.33'));txt(M+420,y,fit(r[3],26),'F2',8.2,'0.12 0.23 0.54');y-=h;hline(M,W-M,y+5);y-=4;});
-    y-=8;rect(M,y-50,W-2*M,58,'0.97 0.98 0.99');txt(M+8,y-6,'Milaan (check karne ke liye)','F2',9.5);
-    txt(M+8,y-20,'Called '+m.called+' = Connected '+m.connected+' + RNR '+m.rnr,'F1',9);
-    txt(M+8,y-32,'Connected '+m.connected+' = Hot '+m.hot+' + Warm '+m.warm+' + Cold '+m.cold+' + Not Interested '+m.notInterested+(m.connected-(m.hot+m.warm+m.cold+m.notInterested)?' + baaki jawab '+(m.connected-(m.hot+m.warm+m.cold+m.notInterested)):''),'F1',9);
-    txt(M+8,y-44,'Har customer ek baar gina hai, uske is din ke aakhri jawab se. ! = entry me galti lag rahi hai.','F1',8,'0.28 0.33 0.41');y-=66;
-    // ----- Customer list pages -----
-    const cols=[[M+4,'#',0],[M+20,'Customer',24],[M+146,'Mobile',12],[M+202,'CRM',9],[M+246,'Call / bana',20],[M+336,'Agli call',20],[M+426,'Jawab / note',24]];
-    const head=(s2,cont)=>{need(40);rect(M,y-5,W-2*M,17,'0.89 0.91 0.94');txt(M+6,y,s2.letter+'. '+s2.title+(cont?' (aage)':''),'F2',10);rtxt(W-M-6,y,fit(s2.rule,60),'F1',7.5);y-=17;cols.forEach(c=>txt(c[0],y,c[1],'F2',7.5,'0.28 0.33 0.41'));y-=4;hline(M,W-M,y);y-=10;};
-    if(sec.length){newPage();}
-    sec.forEach(s2=>{head(s2,false);s2.rows.forEach((r,i)=>{if(y<M+30){newPage();head(s2,true);}
-      if(r.flag)rect(M,y-3,W-2*M,11,'1 0.98 0.80');
-      const v=[(r.flag?'!':'')+(i+1),fit(r.name||'Naam nahi',24),r.mobile,fit(r.crm,9),fit(r.callDisplay,20),fit(r.nextDisplay,20),fit((r.response||'')+(r.note?' · '+r.note:''),24)];
-      cols.forEach((c,j)=>txt(c[0],y,v[j],j===1?'F2':'F1',7.6));y-=11;});y-=10;});
-    txt(M,M-8,'Data: Smart CRM (staff ki save ki hui calls). Ye sirf report hai — isse koi data nahi badalta.','F1',7,'0.4 0.45 0.52');
-    pages.push(ops.join('\n'));
+    const W=595,H=842,M=56,m=d.mis||{};
+    const win=t=>{let o='';for(const ch of String(t==null?'':t)){const c=ch.codePointAt(0);const map={0x2014:0x97,0x2022:0x95,0x2013:0x96,0x201C:0x93,0x201D:0x94,0x2018:0x91,0x2019:0x92,0x2026:0x85,0x2212:0x2D};let v=map[c]!=null?map[c]:(c<256?c:0x3F);if(v===0x28||v===0x29||v===0x5C)o+='\\'+String.fromCharCode(v);else if(v<32||v>126)o+='\\'+v.toString(8).padStart(3,'0');else o+=String.fromCharCode(v);}return o;};
+    const ops=[],txt=(x,y,t,f,sz,rgb)=>ops.push((rgb||'0.06 0.09 0.16')+' rg BT /'+f+' '+sz+' Tf '+x+' '+y+' Td ('+win(t)+') Tj ET');
+    const n=v=>String(Number(v)||0);
+    let y=H-M-10;
+    txt(M,y,'RK GARG JEANS — DAILY MIS','F2',20);y-=22;
+    txt(M,y,'Date: '+d.dateText,'F1',12,'0.28 0.33 0.41');y-=12;
+    ops.push('0.06 G 1 w '+M+' '+y+' m '+(W-M)+' '+y+' l S');y-=34;
+    const head=t=>{txt(M,y,t,'F2',14);y-=26;};
+    const line=(label,val)=>{txt(M+16,y,'\u2022','F1',13);txt(M+32,y,label+':','F1',13);txt(M+250,y,val,'F2',13);y-=24;};
+    head('LEAD & SALES');
+    line('New Leads',n(m.newLeads));line('Called',n(m.called));line('Connected',n(m.connected));line('RNR',n(m.rnr));
+    line('Hot | Warm | Cold',n(m.hot)+'  |  '+n(m.warm)+'  |  '+n(m.cold));
+    line('Quote Shared',n(m.quote));line('Orders Confirmed',n(m.orders));line('Catalogue shared',n(m.catalogue));
+    y-=18;head('FOLLOW-UP STATUS');
+    line('Follow-up Today',n(m.followToday));line('Follow-up Pending',n(m.followPending));line('Interested for Future',n(m.future));line('Not Interested',n(m.notInterested));
+    txt(M,M,'Sab CRM milake (Total) · report bani '+d.asOfDisplay+' IST · Smart CRM','F1',8,'0.4 0.45 0.52');
+    const pages=[ops.join('\n')];
     const objs=[],kids=[];
     objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
     objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
@@ -1191,10 +1170,10 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     if(pdfBusy||S.write||S.session?.role!=='Owner')return;
     const from=$('reportFrom').value,to=$('reportTo').value;
     if(!from||!to||from>to){notice('excelMessage','Upar sahi From / To date chuno.','err');return;}
-    pdfBusy=true;$('generatePdf').disabled=true;const epoch=S.epoch;notice('excelMessage','Daily MIS PDF ban raha hai (customer list ke saath)…','info');
-    try{const d=await rpc('getMisLists',[from,to]);if(epoch!==S.epoch)return;d.dateText=from===to?reportDateLabel(from):reportDateLabel(from)+' se '+reportDateLabel(to);
+    pdfBusy=true;$('generatePdf').disabled=true;const epoch=S.epoch;notice('excelMessage','Daily MIS PDF ban raha hai…','info');
+    try{const r=await rpc('getDailyMis',[from,to]);if(epoch!==S.epoch)return;const d={mis:(r.blocks||[]).find(b=>b.name==='Total')||{},asOfDisplay:r.asOfDisplay};d.dateText=from===to?reportDateLabel(from):reportDateLabel(from)+' se '+reportDateLabel(to);
       crmDownload(misPdf(d),'Daily_MIS_'+(from===to?from:from+'_to_'+to)+'.pdf');
-      notice('excelMessage','PDF download shuru — pehla page format + kahan se aaya, aage har line ke customer.','ok');
+      notice('excelMessage','PDF download shuru — ek page, Daily MIS format.','ok');
     }catch(e){if(epoch===S.epoch)report('excelMessage',e);}finally{pdfBusy=false;$('generatePdf').disabled=false;}
   });
   let excelBusy=false;
