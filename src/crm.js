@@ -416,8 +416,15 @@ export async function getDashboardExcelData(env, s, fromDate, toDate, visitFrom,
 const MIS_WARM = ['Interested', 'Catalogue Sent', 'Price Poocha'];
 const misBlank = () => ({ newLeads: 0, called: 0, connected: 0, rnr: 0, hot: 0, warm: 0, cold: 0, quote: 0, orders: 0, catalogue: 0,
   followToday: 0, followPending: 0, future: 0, notInterested: 0 });
+const nwBlank = () => ({ called: 0, connected: 0, rnr: 0, interested: 0 });
 
-async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
+/**
+ * Ek hi jagah ka hisaab — Daily MIS, Owner Dashboard ke number aur click pe khulne wali list
+ * teeno isi se bante hain, taaki kabhi alag-alag number na dikhein. Sirf PADHTA hai.
+ * Padhta hai: chuni hui dates ki call lines, customers (pehle se cache), converted visits,
+ * aur (withHistory par) sirf in dates ke customers ki pehle ki ek-ek call — naya/purana jaanne ke liye.
+ */
+async function misCore(env, s, fromDate, toDate, r, withHistory) {
   requireOwner(s);
   reportDate(fromDate, 'From date'); reportDate(toDate, 'To date');
   if (fromDate > toDate) fail('From date, To date se pehle ki honi chahiye.');
@@ -425,23 +432,24 @@ async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
   const [logs, users, leadRows, converted, team] = await Promise.all([
     all(env.DB, 'SELECT LeadID, CallDate, Response, CRM, CreatedBy FROM CallLog WHERE CallDate >= ? AND CallDate < ? ORDER BY rowid', a, b),
     r.userRows(), r.leadRows(),
-    all(env.DB, "SELECT CRM, UpdatedAt FROM Visits WHERE Status='Converted'"),
+    all(env.DB, "SELECT LeadID, CRM, UpdatedAt FROM Visits WHERE Status='Converted'"),
     r.team()
   ]);
-  const now = new Date(), today = dayKey(now);
+  const now = new Date(), nowMs = now.getTime(), today = dayKey(now);
   const blocks = new Map([['Total', misBlank()]]);
   team.forEach(t => blocks.set(t, misBlank()));
   const blockOf = crm => { crm = String(crm || '').trim() || 'CRM khaali'; if (!blocks.has(crm)) blocks.set(crm, misBlank()); return blocks.get(crm); };
   const both = (crm, fn) => { fn(blocks.get('Total')); fn(blockOf(crm)); };
 
-  // Customers: naye (in dates), follow-up ka abhi ka haal
+  // Customers: naye (in dates) + follow-up ka abhi ka haal (band customer chhod ke)
+  //   Follow-up Pending = time nikal gaya (ab se pehle) · Follow-up Today = aaj, time abhi baaki
   const leadById = new Map();
   leadRows.forEach(l => {
     if (!l.ID) return;
     leadById.set(String(l.ID), l);
     const created = toIso(l.CreatedAt), closed = String(l.Status || '') === 'closed', next = toIso(l.NextFollowupAt);
     if (created) { const d = dayKey(created); if (d >= fromDate && d <= toDate) both(l.CRM, m => m.newLeads++); }
-    if (!closed && next) { const d = dayKey(next); if (d === today) both(l.CRM, m => m.followToday++); else if (d < today) both(l.CRM, m => m.followPending++); }
+    if (!closed && next) { const t = Date.parse(next); if (t <= nowMs) both(l.CRM, m => m.followPending++); else if (dayKey(next) === today) both(l.CRM, m => m.followToday++); }
   });
 
   // Calls: har (CRM, customer) ki saari call is range mein → ek customer ek baar
@@ -451,10 +459,12 @@ async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
     if (!userTeams) { userTeams = Object.create(null); users.forEach(u => userTeams[String(u.Username || '').trim()] = String(u.TeamMemberName || '')); }
     return userTeams[String(g.CreatedBy || '').trim()] || '';
   };
-  const per = new Map();   // key 'Total|lead' / 'crm|lead' → { picked, last, lastAt, price, catalogue, crm }
+  const per = new Map();   // key 'Total|lead' / 'crm|lead'
+  const entries = new Map([['Total', 0]]);
   const note = (key, crm, response, at) => {
     let x = per.get(key);
-    if (!x) per.set(key, x = { crm, picked: false, last: '', lastAt: -1, price: false, catalogue: false, lead: key.slice(key.indexOf('|') + 1) });
+    if (!x) per.set(key, x = { crm, picked: false, last: '', lastAt: -1, lastCall: -1, price: false, catalogue: false, lead: key.slice(key.indexOf('|') + 1) });
+    if (at > x.lastCall) x.lastCall = at;
     if (response === 'Price Poocha') x.price = true;
     if (response === 'Catalogue Sent') x.catalogue = true;
     if (response && response !== 'Not Picked') { x.picked = true; if (at >= x.lastAt) { x.lastAt = at; x.last = response; } }
@@ -467,7 +477,9 @@ async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
     const crm = crmOf(g) || 'CRM khaali', response = String(g.Response || '').trim();
     note('\u0000Total|' + lead, 'Total', response, at);
     note(crm + '|' + lead, crm, response, at);
+    entries.set('Total', entries.get('Total') + 1); entries.set(crm, (entries.get(crm) || 0) + 1);
   });
+  const isFuture = x => { const l = leadById.get(x.lead), next = l && toIso(l.NextFollowupAt); return !!(x.picked && l && String(l.Status || '') !== 'closed' && x.last !== 'No Requirement' && next && dayKey(next) > today); };
   per.forEach(x => {
     const m = x.crm === 'Total' ? blocks.get('Total') : blockOf(x.crm);
     m.called++;
@@ -479,8 +491,7 @@ async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
     if (x.last === 'No Requirement') m.notInterested++;
     if (x.price) m.quote++;
     if (x.catalogue) m.catalogue++;
-    const l = leadById.get(x.lead), next = l && toIso(l.NextFollowupAt);
-    if (l && String(l.Status || '') !== 'closed' && x.last !== 'No Requirement' && next && dayKey(next) > today) m.future++;
+    if (isFuture(x)) m.future++;
   });
 
   // Orders: visit "Converted" (maal liya) in dates mein
@@ -491,13 +502,122 @@ async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
     if (d >= fromDate && d <= toDate) both(v.CRM, m => m.orders++);
   });
 
-  // Jis CRM ka is report mein kuch nahi aur jo ab team mein nahi — usko mat dikhao
-  const active = new Set(team);
-  const list = [...blocks].filter(([name, m]) => name === 'Total' || active.has(name) || Object.values(m).some(n => n > 0))
+  // Naya ya purana: jis customer ki in dates se PEHLE koi call nahi, wo naya.
+  // Sirf in dates ke customers ki pehle ki calls dekhte hain (index se, chhote tukdon mein).
+  const total = [...per.values()].filter(x => x.crm === 'Total');
+  let oldIds = null;
+  if (withHistory) {
+    oldIds = new Set();
+    const ids = total.map(x => x.lead);
+    for (let i = 0; i < ids.length; i += 80) {
+      const part = ids.slice(i, i + 80);
+      const rows = await all(env.DB, 'SELECT DISTINCT LeadID FROM CallLog WHERE CallDate < ? AND LeadID IN (' + part.map(() => '?').join(',') + ')', a, ...part);
+      rows.forEach(r2 => oldIds.add(String(r2.LeadID)));
+    }
+  }
+  return { fromDate, toDate, now, today, blocks, team, per, total, entries, leadById, oldIds, isFuture, converted };
+}
+
+function misBlocks(c) {
+  const active = new Set(c.team);
+  return [...c.blocks].filter(([name, m]) => name === 'Total' || active.has(name) || Object.values(m).some(n => n > 0))
     .map(([name, m]) => ({ name, ...m }));
-  return { fromDate, toDate, asOf: now.toISOString(), asOfDisplay: fmtDateTime(now), blocks: list };
+}
+
+/**
+ * Daily MIS — WhatsApp wale format jaisa hisaab, Total + har CRM alag (Excel / PDF).
+ *   Called = jinko call hui · RNR = jinki saari call "Not Picked" · Connected = Called - RNR
+ *   Hot = Visit Scheduled · Warm = Interested / Catalogue Sent / Price Poocha · Cold = Call Later
+ *   Quote Shared = "Price Poocha" · Catalogue shared = "Catalogue Sent" · Not Interested = "No Requirement"
+ *   Interested for Future = baat hui, customer band nahi, agla follow-up aaj ke baad
+ *   New Leads = in dates mein bane customer · Orders Confirmed = visit "Converted — maal liya"
+ *   Follow-up Pending = time nikal gaya · Follow-up Today = aaj, time abhi baaki (abhi ka haal)
+ */
+async function dailyMis(env, s, fromDate, toDate, r = new Run(env)) {
+  const c = await misCore(env, s, fromDate, toDate, r, false);
+  return { fromDate, toDate, asOf: c.now.toISOString(), asOfDisplay: fmtDateTime(c.now), blocks: misBlocks(c) };
 }
 export const getDailyMis = (env, s, f, t) => dailyMis(env, s, f, t);
+
+/** Owner Dashboard (naya) — MIS + naya/purana + CRM-wise calls. Baaki number getOwnerSummary / visits se. */
+export async function getOwnerHome(env, s, fromDate, toDate) {
+  const r = new Run(env);
+  const c = await misCore(env, s, fromDate, toDate, r, true);
+  const nw = { naye: nwBlank(), purane: nwBlank() };
+  c.total.forEach(x => {
+    const m = c.oldIds.has(x.lead) ? nw.purane : nw.naye;
+    m.called++;
+    if (x.picked) { m.connected++; if (MIS_WARM.includes(x.last) || x.last === 'Visit Scheduled') m.interested++; } else m.rnr++;
+  });
+  const crmCalls = misBlocks(c).filter(b => b.name !== 'Total').map(b => ({ crm: b.name, entries: c.entries.get(b.name) || 0, called: b.called, connected: b.connected, rnr: b.rnr }));
+  return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), entries: c.entries.get('Total') || 0, mis: misBlocks(c), newOld: nw, crmCalls };
+}
+
+/**
+ * Dashboard pe kisi number pe dabane se: wahi customers jinse wo number bana.
+ * key: called · connected · rnr · hot · warm · cold · quote · catalogue · future · notint · naye · purane · crm (arg = CRM naam)
+ *      status (arg = interested/callback/visit/closed) · late (arg = CRM ya khaali) · aage · followToday · newLeads
+ */
+const LIST_KEYS = ['called', 'connected', 'rnr', 'hot', 'warm', 'cold', 'quote', 'catalogue', 'future', 'notint', 'naye', 'purane', 'crm', 'orders', 'status', 'late', 'aage', 'followToday', 'newLeads', 'noDate'];
+const CALL_KEYS = ['called', 'connected', 'rnr', 'hot', 'warm', 'cold', 'quote', 'catalogue', 'future', 'notint', 'naye', 'purane', 'crm'];
+function listFrom(c, key, arg) {
+  if (!LIST_KEYS.includes(key)) fail('Ye list nahi mili.');
+  const nowMs = c.now.getTime();
+  const flagOf = (l, resp) => {
+    const name = String(l.Name || '').trim(), noteText = String(l.Note || '');
+    if (!name || /^(unknown|na|n\/a|\.+|-+)$/i.test(name) || name.replace(/[^a-z]/gi, '').length < 3) return 'Naam sahi nahi — "Edit lead details" se bharo';
+    if (resp === 'No Requirement' && /(nahi\s*uth|not\s*pick|uthaya\s*nahi|phone\s*nahi|pick\s*nahi)/i.test(noteText)) return '"Mana kiya" daala par note me phone nahi uthaya likha hai — ye RNR hai?';
+    return '';
+  };
+  const row = (l, resp, at) => ({
+    id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: resp || l.Disposition || '',
+    callDisplay: at > 0 ? fmtDateTime(new Date(at)) : fmtDateTime(toIso(l.LastCallAt)), nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)),
+    note: l.Note || '', flag: flagOf(l, resp || l.Disposition)
+  });
+  if (CALL_KEYS.includes(key)) {
+    const pool = key === 'crm' ? [...c.per.values()].filter(x => x.crm === (arg || 'CRM khaali')) : c.total;
+    const keep = {
+      called: () => true, connected: x => x.picked, rnr: x => !x.picked, hot: x => x.picked && x.last === 'Visit Scheduled',
+      warm: x => x.picked && MIS_WARM.includes(x.last), cold: x => x.picked && x.last === 'Call Later', quote: x => x.price, catalogue: x => x.catalogue,
+      future: c.isFuture, notint: x => x.picked && x.last === 'No Requirement', naye: x => !c.oldIds.has(x.lead), purane: x => c.oldIds.has(x.lead), crm: () => true
+    }[key];
+    return pool.filter(keep).sort((p, q) => q.lastCall - p.lastCall).map(x => { const l = c.leadById.get(x.lead); return l ? row(l, x.picked ? x.last : 'Not Picked', x.lastCall) : null; }).filter(Boolean);
+  }
+  if (key === 'orders') {
+    return c.converted.filter(v => { const t = toIso(v.UpdatedAt); if (!t) return false; const d = dayKey(t); return d >= c.fromDate && d <= c.toDate; })
+      .map(v => { const l = c.leadById.get(String(v.LeadID)); return l ? Object.assign(row(l, 'Maal liya', Date.parse(toIso(v.UpdatedAt))), { crm: v.CRM || l.CRM || '' }) : null; }).filter(Boolean);
+  }
+  const leads = [...c.leadById.values()];
+  const open = l => String(l.Status || '') !== 'closed', nextMs = l => { const t = toIso(l.NextFollowupAt); return t ? Date.parse(t) : NaN; };
+  let pick;
+  if (key === 'status') { if (!['interested', 'callback', 'visit', 'closed'].includes(arg)) fail('Ye list nahi mili.'); pick = l => String(l.Status || '') === arg; }
+  else if (key === 'late') pick = l => open(l) && nextMs(l) <= nowMs && (!arg || String(l.CRM || '') === arg);
+  else if (key === 'aage') pick = l => open(l) && nextMs(l) > nowMs;
+  else if (key === 'followToday') pick = l => open(l) && nextMs(l) > nowMs && dayKey(toIso(l.NextFollowupAt)) === c.today;
+  else if (key === 'noDate') pick = l => open(l) && !toIso(l.NextFollowupAt) && !!toIso(l.LastCallAt);
+  else pick = l => { const t = toIso(l.CreatedAt); if (!t) return false; const d = dayKey(t); return d >= c.fromDate && d <= c.toDate; };
+  const list = leads.filter(pick);
+  if (key === 'late' || key === 'aage' || key === 'followToday') list.sort((p, q) => nextMs(p) - nextMs(q));
+  else list.sort((p, q) => String(q.LastCallAt || '').localeCompare(String(p.LastCallAt || '')));
+  return list.map(l => row(l, '', 0));
+}
+/** Dashboard pe ek number dabaya → uske customers. Sirf padhta hai. */
+export async function getOwnerList(env, s, key, arg, fromDate, toDate) {
+  requireOwner(s);
+  key = String(key || ''); arg = String(arg || '').trim();
+  if (!LIST_KEYS.includes(key)) fail('Ye list nahi mili.');
+  const c = await misCore(env, s, fromDate, toDate, new Run(env), key === 'naye' || key === 'purane');
+  const rows = listFrom(c, key, arg);
+  return { key, arg, total: rows.length, rows: rows.slice(0, 1000), cut: rows.length > 1000 };
+}
+/** Daily MIS PDF: har line ke customers ek hi baar me (server pe ek hi baar padhai). */
+const MIS_LIST_KEYS = ['warm', 'cold', 'hot', 'notint', 'rnr', 'future', 'quote', 'catalogue', 'orders', 'newLeads', 'followToday', 'late'];
+export async function getMisLists(env, s, fromDate, toDate) {
+  const c = await misCore(env, s, fromDate, toDate, new Run(env), false);
+  const lists = {};
+  MIS_LIST_KEYS.forEach(k => { lists[k] = listFrom(c, k, '').slice(0, 1500); });
+  return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), mis: misBlocks(c).find(b => b.name === 'Total'), lists };
+}
 
 /* ---------------- Saving (safe, all-or-nothing) ---------------- */
 
