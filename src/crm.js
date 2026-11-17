@@ -619,6 +619,18 @@ export async function getMisLists(env, s, fromDate, toDate) {
   return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), mis: misBlocks(c).find(b => b.name === 'Total'), lists };
 }
 
+/** "Customer kahan se aaye" — ek source ke customer. Sirf padhta hai, sirf click pe. */
+export async function getSourceList(env, s, source) {
+  requireOwner(s);
+  source = String(source == null ? '' : source).trim();
+  const blank = source === '(khaali)' || source === '';
+  const rows = await all(env.DB, 'SELECT ID, Name, Mobile, CRM, Status, Disposition, LastCallAt, NextFollowupAt, Note, CreatedAt FROM Leads WHERE ' +
+    (blank ? "(Source IS NULL OR Source='')" : 'Source=?') + ' ORDER BY CreatedAt DESC LIMIT 2001', ...(blank ? [] : [source]));
+  const out = rows.slice(0, 2000).map(l => ({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || (l.LastCallAt ? '' : 'Call nahi hui'),
+    callDisplay: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : 'bana: ' + fmtDateTime(toIso(l.CreatedAt)), nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '' }));
+  return { source: blank ? '(khaali)' : source, total: out.length, rows: out, cut: rows.length > 2000 };
+}
+
 /** Purani list ka milaan: har dabba dabane pe asli number. Sirf padhta hai, sirf click pe chalta hai. */
 export async function getListMilaan(env, s, which) {
   requireOwner(s);
