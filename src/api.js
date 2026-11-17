@@ -34,6 +34,7 @@ const WITH_SESSION = {
   getOwnerHome: crm.getOwnerHome,
   getOwnerList: crm.getOwnerList,
   getMisLists: crm.getMisLists,
+  getListMilaan: crm.getListMilaan,
   createLead: crm.createLead,
   createLeadAndCall: crm.createLeadAndCall,
   updateLead: crm.updateLead,

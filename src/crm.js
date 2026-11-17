@@ -619,6 +619,43 @@ export async function getMisLists(env, s, fromDate, toDate) {
   return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), mis: misBlocks(c).find(b => b.name === 'Total'), lists };
 }
 
+/** Purani list ka milaan: har dabba dabane pe asli number. Sirf padhta hai, sirf click pe chalta hai. */
+export async function getListMilaan(env, s, which) {
+  requireOwner(s);
+  which = String(which || '');
+  if (!['inApp', 'outside', 'changed', 'missing'].includes(which)) fail('Ye list nahi mili.');
+  const db = env.DB, LIST = 'SELECT Mobile FROM LegacyImportRows WHERE ValidMobile=1';
+  const COLS = 'ID, Name, Mobile, CRM, Source, Disposition, LastCallAt, NextFollowupAt, Note, CreatedAt';
+  const row = (l, extra) => Object.assign({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || '',
+    callDisplay: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : 'call nahi hui', nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '' }, extra || {});
+  // Jo list numbers app me customer nahi bane, aur unme se kiska number CRM ne badla.
+  const lost = await all(db, `SELECT DISTINCT r.Mobile AS mobile, MAX(r.Name) AS listName, g.ID AS reviewId, g.Status AS reviewStatus FROM LegacyImportRows r
+      LEFT JOIN LegacyReview g ON g.Mobile=r.Mobile WHERE r.ValidMobile=1 AND r.Mobile NOT IN (SELECT Mobile FROM Leads) GROUP BY r.Mobile`);
+  const changed = [], missing = [];
+  for (const m of lost) {
+    if (m.reviewId && ['active', 'existing'].includes(m.reviewStatus)) {
+      const recId = 'REC-' + await sha256Hex(String(m.reviewId), 'legacy-recovered-lead-v1');
+      const l = await first(db, `SELECT ${COLS} FROM Leads WHERE ID=?`, recId);
+      if (l) { changed.push(row(l, { flag: 'List me number tha: ' + m.mobile + ' — CRM ne call ke time badal ke ' + l.Mobile + ' kiya' })); continue; }
+    }
+    let why = 'App me customer nahi bana';
+    if (m.reviewId && m.reviewStatus === 'pending') why = 'Legacy Review me pending hai (CALL NOW nahi dabaya)';
+    else if (m.reviewId) why = 'Legacy Review me "' + m.reviewStatus + '" chuna gaya';
+    missing.push({ id: '', name: m.listName || '', mobile: m.mobile, crm: '', response: '', callDisplay: '', nextDisplay: '', note: '', flag: why, noLead: true });
+  }
+  let rows;
+  if (which === 'changed') rows = changed;
+  else if (which === 'missing') rows = missing;
+  else if (which === 'inApp') rows = (await all(db, `SELECT ${COLS} FROM Leads WHERE Mobile IN (${LIST}) ORDER BY Name`)).map(l => row(l));
+  else {
+    const skip = new Set(changed.map(r => r.id));
+    rows = (await all(db, `SELECT ${COLS} FROM Leads WHERE Mobile NOT IN (${LIST}) ORDER BY CreatedAt DESC`)).filter(l => !skip.has(String(l.ID)))
+      .map(l => row(l, { flag: '', source: l.Source || '' }));
+    rows.forEach(r => { r.response = (r.response ? r.response + ' · ' : '') + 'Source: ' + (r.source || 'khaali'); });
+  }
+  return { which, total: rows.length, rows: rows.slice(0, 2000), cut: rows.length > 2000 };
+}
+
 /* ---------------- Saving (safe, all-or-nothing) ---------------- */
 
 /**
