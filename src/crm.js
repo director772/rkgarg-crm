@@ -571,7 +571,7 @@ function listFrom(c, key, arg) {
   };
   const row = (l, resp, at) => ({
     id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: resp || l.Disposition || '',
-    callDisplay: at > 0 ? fmtDateTime(new Date(at)) : fmtDateTime(toIso(l.LastCallAt)), nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)),
+    lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '', callDisplay: at > 0 ? fmtDateTime(new Date(at)) : fmtDateTime(toIso(l.LastCallAt)), nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)),
     note: l.Note || '', flag: flagOf(l, resp || l.Disposition)
   });
   if (CALL_KEYS.includes(key)) {
@@ -627,7 +627,7 @@ export async function getSourceList(env, s, source) {
   const rows = await all(env.DB, 'SELECT ID, Name, Mobile, CRM, Status, Disposition, LastCallAt, NextFollowupAt, Note, CreatedAt FROM Leads WHERE ' +
     (blank ? "(Source IS NULL OR Source='')" : 'Source=?') + ' ORDER BY CreatedAt DESC LIMIT 2001', ...(blank ? [] : [source]));
   const out = rows.slice(0, 2000).map(l => ({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || (l.LastCallAt ? '' : 'Call nahi hui'),
-    callDisplay: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : 'bana: ' + fmtDateTime(toIso(l.CreatedAt)), nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '' }));
+    lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '', callDisplay: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : 'bana: ' + fmtDateTime(toIso(l.CreatedAt)), nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '' }));
   return { source: blank ? '(khaali)' : source, total: out.length, rows: out, cut: rows.length > 2000 };
 }
 
@@ -639,7 +639,7 @@ export async function getListMilaan(env, s, which) {
   const db = env.DB, LIST = 'SELECT Mobile FROM LegacyImportRows WHERE ValidMobile=1';
   const COLS = 'ID, Name, Mobile, CRM, Source, Disposition, LastCallAt, NextFollowupAt, Note, CreatedAt';
   const row = (l, extra) => Object.assign({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || '',
-    callDisplay: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : 'call nahi hui', nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '' }, extra || {});
+    lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '', callDisplay: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : 'call nahi hui', nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '' }, extra || {});
   // Jo list numbers app me customer nahi bane, aur unme se kiska number CRM ne badla.
   const lost = await all(db, `SELECT DISTINCT r.Mobile AS mobile, MAX(r.Name) AS listName, g.ID AS reviewId, g.Status AS reviewStatus FROM LegacyImportRows r
       LEFT JOIN LegacyReview g ON g.Mobile=r.Mobile WHERE r.ValidMobile=1 AND r.Mobile NOT IN (SELECT Mobile FROM Leads) GROUP BY r.Mobile`);
