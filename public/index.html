@@ -49,7 +49,7 @@
   </header>
   <div id="globalNotice" class="notice page-error" role="alert" hidden></div>
   <section id="page-owner" class="page wrap" hidden>
-    <div class="head"><div><h1>Owner Dashboard</h1><div class="sub" id="ohSub">Kisi bhi number pe dabao — list khulegi, wahin se edit karo</div></div><div class="actions"><button id="generatePdf" class="primary" type="button">↓ Daily MIS PDF</button><button id="generateExcel" class="btn" type="button">↓ Excel</button><button id="ownerRefresh" class="btn">↻ Refresh</button></div></div>
+    <div class="head"><div><h1>Owner Dashboard</h1><div class="sub" id="ohSub">Kisi bhi number pe dabao — list khulegi, wahin se edit karo</div></div><div class="actions"><button id="generatePdf" class="primary" type="button">↓ Daily MIS PDF</button><button id="ohShareImg" class="btn" type="button" style="background:#16a34a;color:#fff;border-color:#16a34a">📤 WhatsApp ke liye photo</button><button id="generateExcel" class="btn" type="button">↓ Excel</button><button id="ownerRefresh" class="btn">↻ Refresh</button></div></div>
     <div class="ohDates" role="group" aria-label="Din chuno"><button type="button" class="ohChip" data-oh-preset="today">Aaj</button><button type="button" class="ohChip" data-oh-preset="yesterday">Kal</button><button type="button" class="ohChip" data-oh-preset="week">Pichhle 7 din</button><button type="button" class="ohChip" data-oh-preset="month">Is mahine</button><label>From<input type="date" id="ohFrom"></label><label>To<input type="date" id="ohTo"></label><button type="button" class="btn" id="ohApply">Dikhao</button></div>
     <div id="excelMessage" class="notice" role="status" hidden></div>
     <div id="ownerHome"><p class="help">Dashboard load ho raha hai…</p></div>
@@ -200,7 +200,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
 <!-- Smart CRM: single-click phone QR. Browser-only; no Sheet writes. -->
 <style>
 button.crmPhoneQR{appearance:none;background:transparent;border:0;border-radius:0;padding:0;margin:0;color:#1d4ed8;font-weight:700;text-decoration:underline;font:inherit;letter-spacing:inherit;line-height:inherit;text-align:inherit;cursor:pointer;vertical-align:baseline;min-width:0;min-height:0}
-button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}.crmPhoneQR{font-weight:700;white-space:nowrap}.crmPhoneQR:hover{color:#15803d}
+button.crmPhoneQR:focus-visible{outline:2px solid #245be8;outline-offset:3px}.crmPhoneQR{font-weight:700;white-space:nowrap}.ohNumLine{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:6px 0 2px;font-size:14px}.ohLast{background:#eef2ff;color:#3730a3;border-radius:999px;padding:2px 10px;font-size:13px}.ohLast.none{background:#fff7ed;color:#9a3412}.crmPhoneQR:hover{color:#15803d}
 #crmPhoneQrDialog{border:1px solid #dce3ed;border-radius:16px;background:#fff;color:#17253b;padding:24px;width:min(380px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-shadow:0 18px 70px #0005;text-align:center}
 #crmPhoneQrDialog::backdrop{background:rgba(10,20,35,.6)}
 #crmPhoneQrDialog h2{font-size:20px;margin:0 0 8px}#crmPhoneQrDialog p{margin:8px 0;overflow-wrap:anywhere}#crmPhoneQrNumber{font-size:22px;font-weight:700}
@@ -1094,7 +1094,8 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     return D[key]||null;
   }
   function ohCloseDrill(){OH.drillSeq++;OH.cur=null;if($('ohDrill')){$('ohDrill').hidden=true;$('ohOverlay').hidden=true;}}
-  function ohRow(r){if(r.noLead)return '<div class="ohItem"><div class="top2"><b>'+esc(r.name||'Naam nahi')+'</b><span class="ohResp">App me nahi</span></div><div class="small">'+crmPhoneQrMarkup(r.mobile,r.name)+'</div>'+(r.flag?'<div class="ohFlag">⚠ '+esc(r.flag)+'</div>':'')+'</div>';return '<div class="ohItem"><div class="top2"><button type="button" class="linkbutton" data-profile="'+esc(r.id)+'">'+esc(r.name||'Naam nahi')+'</button><span class="ohResp">'+esc(r.response||'—')+'</span></div><div class="small">'+esc(r.callDisplay||'—')+' · '+crmPhoneQrMarkup(r.mobile,r.name)+' · '+esc(r.crm||'—')+' · agli call: '+esc(r.nextDisplay||'—')+'</div>'+(r.note?'<div class="small noteText">“'+esc(r.note)+'”</div>':'')+(r.flag?'<div class="ohFlag">⚠ '+esc(r.flag)+'</div>':'')+'<div style="margin-top:8px"><button type="button" class="btn" data-profile="'+esc(r.id)+'">Poori detail / call update</button></div></div>';}
+  function ohLastCall(r){if(r.lastCall!=null)return r.lastCall;const c=String(r.callDisplay||'');return /^(bana:|call nahi)/.test(c)||c==='—'?'':c;}
+  function ohRow(r){if(r.noLead)return '<div class="ohItem"><div class="top2"><b>'+esc(r.name||'Naam nahi')+'</b><span class="ohResp">App me nahi</span></div><div class="small">'+crmPhoneQrMarkup(r.mobile,r.name)+'</div>'+(r.flag?'<div class="ohFlag">⚠ '+esc(r.flag)+'</div>':'')+'</div>';return '<div class="ohItem"><div class="top2"><button type="button" class="linkbutton" data-profile="'+esc(r.id)+'">'+esc(r.name||'Naam nahi')+'</button><span class="ohResp">'+esc(r.response||'—')+'</span></div><div class="ohNumLine">'+crmPhoneQrMarkup(r.mobile,r.name)+'<span class="ohLast'+(ohLastCall(r)?'':' none')+'">Last call: <b>'+esc(ohLastCall(r)||'abhi tak nahi hui')+'</b></span></div><div class="small">CRM: '+esc(r.crm||'—')+' · agli call: '+esc(r.nextDisplay||'—')+'</div>'+(r.note?'<div class="small noteText">“'+esc(r.note)+'”</div>':'')+(r.flag?'<div class="ohFlag">⚠ '+esc(r.flag)+'</div>':'')+'<div style="margin-top:8px"><button type="button" class="btn" data-profile="'+esc(r.id)+'">Poori detail / call update</button></div></div>';}
   function ohVisitRow(v){const pending=['Planned','Rescheduled'].includes(v.status);return '<div class="ohItem"><div class="top2"><button type="button" class="linkbutton" data-profile="'+esc(v.leadId)+'">'+esc(v.name||'Naam nahi')+'</button><span class="ohResp">'+esc(v.status)+'</span></div><div class="small">'+crmPhoneQrMarkup(v.mobile,v.name)+' · '+esc(v.crm)+' · visit: '+esc(v.date?reportDateLabel(v.date):'date nahi')+(v.actualDisplay&&v.actualDisplay!=='—'?' · aaya: '+esc(v.actualDisplay):'')+'</div>'+(v.note?'<div class="small noteText">“'+esc(v.note)+'”</div>':'')+(pending||v.status==='Done'?'<div style="margin-top:8px"><button type="button" class="primary" data-visit="'+esc(v.id)+'">Update / Maal liya</button></div>':'')+'</div>';}
   async function ohOpen(key,arg){
     const def=ohDef(key,arg||'');if(!def||!OH.home)return;const n=++OH.drillSeq,epoch=S.epoch;OH.cur={key,arg};
@@ -1157,7 +1158,9 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     y-=18;head('FOLLOW-UP STATUS');
     line('Follow-up Today',n(m.followToday));line('Follow-up Pending',n(m.followPending));line('Interested for Future',n(m.future));line('Not Interested',n(m.notInterested));
     txt(M,M,'Sab CRM milake (Total) · report bani '+d.asOfDisplay+' IST · Smart CRM','F1',8,'0.4 0.45 0.52');
-    const pages=[ops.join('\n')];
+    return pdfBlob([ops.join('\n')],W,H);
+  }
+  function pdfBlob(pages,W,H){
     const objs=[],kids=[];
     objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
     objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
@@ -1171,6 +1174,32 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     return new Blob([bytes],{type:'application/pdf'});
   }
   function crmDownload(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+  // ---- Dashboard ki photo (WhatsApp group me bhejne ke liye). Library sirf button dabane pe aati hai. ----
+  let shotBusy=false;
+  function loadH2C(){return window.html2canvas?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='/html2canvas.min.js';sc.onload=ok;sc.onerror=()=>no(new Error('Photo wala tool load nahi hua, internet check karo'));document.head.appendChild(sc);});}
+  // Photo tool gol chart (conic-gradient) nahi banata — isliye wahi chart canvas pe bana ke lagate hain.
+  function conicImg(style,size){const m=/conic-gradient\((.*)\)/.exec(style||'');const c=document.createElement('canvas');c.width=c.height=size;if(!m)return c.toDataURL();const x=c.getContext('2d'),r=size/2;
+    for(const part of m[1].split(/,(?![^(]*\))/)){const mm=/^(rgba?\([^)]*\)|#[0-9a-fA-F]+|[a-zA-Z]+)\s*(.*)$/.exec(part.trim());if(!mm)continue;const pos=mm[2].split(/\s+/).filter(Boolean).map(v=>parseFloat(v)||0);const t=[mm[1]];const a=pos[0]||0,b=pos.length>1?pos[1]:100;if(!(b>a))continue;x.beginPath();x.moveTo(r,r);x.arc(r,r,r,(a*3.6-90)*Math.PI/180,(b*3.6-90)*Math.PI/180);x.closePath();x.fillStyle=t[0];x.fill();}
+    return c.toDataURL('image/png');}
+  $('ohShareImg').addEventListener('click',async()=>{
+    if(shotBusy||S.session?.role!=='Owner')return;const home=$('ownerHome');if(!home||!home.children.length){notice('excelMessage','Pehle dashboard load hone do.','err');return;}
+    shotBusy=true;const btn=$('ohShareImg');btn.disabled=true;notice('excelMessage','Photo ban rahi hai…','info');
+    const range=($('ohFrom')?.value&&$('ohTo')?.value)?($('ohFrom').value===$('ohTo').value?reportDateLabel($('ohFrom').value):reportDateLabel($('ohFrom').value)+' se '+reportDateLabel($('ohTo').value)):'';
+    const head=document.createElement('div');head.style.cssText='grid-column:1/-1;padding:4px 2px 2px;font:800 22px system-ui,Segoe UI,sans-serif;color:#0f172a';
+    head.innerHTML='RK GARG JEANS — CRM REPORT<div style="font:600 14px system-ui,Segoe UI,sans-serif;color:#475569;margin-top:4px">'+esc(range)+' · bani '+esc(new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}))+'</div>';
+    home.prepend(head);const oldPad=home.style.padding;home.style.padding='18px';
+    try{await loadH2C();
+      const c=await window.html2canvas(home,{backgroundColor:'#f4f6fa',scale:Math.min(2,Math.max(1.5,window.devicePixelRatio||1)),logging:false,useCORS:true,ignoreElements:el=>el.id==='ohOverlay'||el.id==='ohDrill'||(el.tagName==='BUTTON'&&/PDF/.test(el.textContent||'')),onclone:doc=>doc.querySelectorAll('[style*="conic-gradient"]').forEach(el=>{const w=el.offsetWidth||160;el.style.background='url('+conicImg(el.getAttribute('style'),w*2)+') center/100% 100% no-repeat';})});
+      const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob)throw new Error('Photo nahi bani');
+      const name='CRM_Report_'+new Date(Date.now()+19800000).toISOString().slice(0,10)+'.png',file=new File([blob],name,{type:'image/png'});
+      const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if(mobile&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'CRM Report'});notice('excelMessage','Photo share ho gayi — WhatsApp chuno aur group me bhejo.','ok');return;}catch(e){if(e&&e.name==='AbortError'){notice('excelMessage','Share band kiya.','info');return;}}}
+      let copied=false;try{if(navigator.clipboard&&window.ClipboardItem){await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);copied=true;}}catch(e){}
+      crmDownload(blob,name);
+      notice('excelMessage',copied?'Photo download ho gayi aur copy bhi ho gayi — WhatsApp Web me group kholo aur Ctrl + V dabao.':'Photo download ho gayi — WhatsApp me group kholo aur 📎 se ye photo bhejo.','ok');
+    }catch(e){notice('excelMessage','Photo nahi bani: '+e.message,'err');}
+    finally{head.remove();home.style.padding=oldPad;shotBusy=false;btn.disabled=false;}
+  });
   let pdfBusy=false;
   $('generatePdf').addEventListener('click',async()=>{
     if(pdfBusy||S.write||S.session?.role!=='Owner')return;
