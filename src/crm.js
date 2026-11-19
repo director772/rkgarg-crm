@@ -619,6 +619,62 @@ export async function getMisLists(env, s, fromDate, toDate) {
   return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), mis: misBlocks(c).find(b => b.name === 'Total'), lists };
 }
 
+/** Live / 2 ghante ki report: ek din ki saari call entries (CallDate index), un customers ka naam-number, pehli call kab hui (naye/purane), us din bane naye lead. */
+export async function getLiveToday(env, s, day, withFunnel) {
+  requireOwner(s);
+  const db = env.DB, now = new Date(), today = dayKey(now);
+  day = /^\d{4}-\d{2}-\d{2}$/.test(String(day || '')) ? String(day) : today;
+  if (day > today) fail('Aage ki date ka data nahi hota.');
+  const [a, b] = dayRangeUtc(day, day);
+  const [rows, nl, team] = await Promise.all([
+    all(db, 'SELECT LeadID, CallDate, Response, CRM, CreatedBy, Note FROM CallLog WHERE CallDate >= ? AND CallDate < ? ORDER BY CallDate', a, b),
+    all(db, 'SELECT ID, Name, Mobile, CRM, Source, CreatedAt FROM Leads WHERE CreatedAt >= ? AND CreatedAt < ?', a, b),
+    activeTeam(db)
+  ]);
+  const calls = rows.map(r => ({ t: toIso(r.CallDate) || r.CallDate, crm: r.CRM || r.CreatedBy || '', lead: String(r.LeadID || ''), resp: r.Response || '', note: r.Note || '' }));
+  const ids = [...new Set(calls.map(c => c.lead).filter(Boolean))], names = {}, firstCall = {};
+  for (let i = 0; i < ids.length; i += 90) {
+    const part = ids.slice(i, i + 90), q = part.map(() => '?').join(',');
+    const [ls, fc] = await Promise.all([
+      all(db, `SELECT ID, Name, Mobile FROM Leads WHERE ID IN (${q})`, ...part),
+      all(db, `SELECT LeadID, MIN(CallDate) AS f FROM CallLog WHERE LeadID IN (${q}) GROUP BY LeadID`, ...part)
+    ]);
+    ls.forEach(l => { names[String(l.ID)] = [l.Name || '', l.Mobile || '']; });
+    fc.forEach(r => { firstCall[String(r.LeadID)] = toIso(r.f) || r.f; });
+  }
+  calls.forEach(c => { c.fresh = !!firstCall[c.lead] && firstCall[c.lead] === c.t; });
+  const newLeads = nl.map(l => ({ t: toIso(l.CreatedAt) || l.CreatedAt, id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', source: l.Source || '' }));
+  const nowIso = now.toISOString();
+  const [vis, od] = await Promise.all([
+    all(db, "SELECT LeadID, CRM, Status, ActualAt, UpdatedAt FROM Visits WHERE (ActualAt >= ? AND ActualAt < ?) OR (Status='Converted' AND UpdatedAt >= ? AND UpdatedAt < ?)", a, b, a, b),
+    all(db, "SELECT ID, Name, Mobile, CRM, Disposition, NextFollowupAt, LastCallAt FROM Leads WHERE Status<>'closed' AND COALESCE(NextFollowupAt,'')<>'' AND NextFollowupAt<=? ORDER BY NextFollowupAt", nowIso)
+  ]);
+  const visits = vis.map(v => ({ lead: String(v.LeadID || ''), crm: v.CRM || '', status: v.Status || '', actual: toIso(v.ActualAt), updated: toIso(v.UpdatedAt) }));
+  const overdue = od.map(l => ({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', resp: l.Disposition || '', due: toIso(l.NextFollowupAt), lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '' }));
+  let funnel = null;
+  if (withFunnel) {
+    const [ls, vs] = await Promise.all([all(db, 'SELECT ID, CRM, Disposition, LastCallAt, CreatedAt FROM Leads'), all(db, 'SELECT LeadID, Status FROM Visits')]);
+    const vMax = new Map(), rank = { Planned: 1, Rescheduled: 1, Cancelled: 1, Done: 2, Converted: 3 };
+    vs.forEach(v => { const k = String(v.LeadID || ''), r = rank[v.Status] || 1; if (r > (vMax.get(k) || 0)) vMax.set(k, r); });
+    const INT = ['Interested', 'Catalogue Sent', 'Price Poocha', 'Visit Scheduled'];
+    const blank = () => [0, 0, 0, 0, 0, 0, 0], tot = blank(), byCrm = {}, groups = {};
+    ls.forEach(l => {
+      const v = vMax.get(String(l.ID)) || 0, d = l.Disposition || '';
+      let lvl = 0;
+      if (l.LastCallAt || v) lvl = 1;
+      if (lvl >= 1 && ((d && d !== 'Not Picked') || v)) lvl = 2;
+      if (INT.includes(d) || v) lvl = Math.max(lvl, 3);
+      if (v) lvl = Math.max(lvl, 3 + v);
+      const c = l.CRM || '(khaali)'; byCrm[c] = byCrm[c] || blank();
+      const dk = l.CreatedAt && !isNaN(new Date(l.CreatedAt).getTime()) ? dayKey(new Date(l.CreatedAt)) : '', key = c + '|' + dk;
+      groups[key] = groups[key] || [c, dk, blank()];
+      for (let i = 0; i <= lvl; i++) { tot[i]++; byCrm[c][i]++; groups[key][2][i]++; }
+    });
+    funnel = { total: tot, byCrm, groups: Object.values(groups) };
+  }
+  return { day, today, isToday: day === today, nowIso, calls, names, newLeads, team, visits, overdue, funnel };
+}
+
 /** "Customer kahan se aaye" — ek source ke customer. Sirf padhta hai, sirf click pe. */
 export async function getSourceList(env, s, source) {
   requireOwner(s);
