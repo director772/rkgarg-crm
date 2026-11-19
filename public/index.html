@@ -890,7 +890,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
       return '<tr><td><b>'+lvTime(c.t)+'</b></td><td><button type="button" class="linkbutton" data-profile="'+esc(c.lead)+'">'+esc(nm[0]||'Customer')+'</button></td><td>'+(nm[1]?crmPhoneQrMarkup(nm[1],nm[0]):'—')+'</td><td>'+(c.fresh?'<b style="color:#1d4ed8">Naya</b>':'Follow-up')+'</td><td>'+esc(lvRespWords(c.resp))+'</td><td class="lvNote">'+esc(c.note||'')+'</td></tr>';}).join('')+'</tbody></table>';}
   function renderLive(){
     const d=LV.data;if(!d)return;const now=Date.parse(d.nowIso),calls=d.calls||[],vis=d.visits||[],od=d.overdue||[];
-    const crms=[...new Set([...(d.team||[]),...calls.map(c=>c.crm).filter(Boolean)])];
+    const crms=[...new Set([...calls.map(c=>c.crm),...vis.filter(v=>v.actual||v.status==='Converted').map(v=>v.crm)].filter(Boolean))];
     const curSlot=d.isToday?lvSlot(lvHour(d.nowIso)):-1;
     // slots: 10-12,12-2,2-4,4-6,6-8 hamesha; 8 PM ke baad / 10 se pehle sirf jab kaam hua
     const keys=new Set([10,12,14,16,18]);calls.forEach(c=>keys.add(lvSlot(lvHour(c.t))));vis.forEach(v=>{if(v.actual)keys.add(lvSlot(lvHour(v.actual)));});
@@ -908,13 +908,14 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     h+='<section class="lvCard"><div class="lvHeadRow"><div><h2>'+(d.isToday?'Aaj':reportDateLabel(d.day))+' ki calling — har 2 ghante ka hisaab</h2><div class="sub">Office 10 AM – 7 PM · 7 baje ke baad call hui to wo bhi aati hai · '+(d.isToday?'har 2 minute me apne aap update · aakhri update '+lvTime(d.nowIso):'purane din ki report')+'</div></div>'+
       '<div class="lvHeadAct"><input type="date" id="lvDay" value="'+esc(d.day)+'" max="'+esc(d.today)+'"><button type="button" class="btn" data-lv-today>Aaj</button><button type="button" class="btn" data-lv-refresh>↻ Update</button></div></div>';
     const tableFor=(key,list,vlist,title,sub)=>{
-      const rows=slots.map(k=>{const L=list.filter(c=>lvSlot(lvHour(c.t))===k),r=lvStats(L,vlist,k);
-        return '<tr class="'+(k===curSlot?'now':'')+'"><td><b>'+lvSlotWords(k)+'</b>'+(k===curSlot?' <small>(abhi)</small>':'')+'</td>'+lvCells(r)+'</tr>';}).join('');
-      const T=lvStats(list,vlist,null);
+      const RS=slots.map(k=>lvStats(list.filter(c=>lvSlot(lvHour(c.t))===k),vlist,k));
+      const rows=slots.map((k,i)=>'<tr class="'+(k===curSlot?'now':'')+'"><td><b>'+lvSlotWords(k)+'</b>'+(k===curSlot?' <small>(abhi)</small>':'')+'</td>'+lvCells(RS[i])+'</tr>').join('');
+      const T={};['entries','naye','fu','conn','rnr','int','visit','later','ni','came','sold'].forEach(f=>T[f]=RS.reduce((a,r)=>a+r[f],0));T.cust=new Set(list.map(c=>c.lead)).size;
       return '<div class="lvCrmBlock"><h3 class="lvCrmHead">'+title+' <span>'+sub(T)+'</span></h3><div style="overflow-x:auto"><table class="lvTable lvSimple"><thead>'+LV_HEAD+'</thead><tbody>'+rows+'<tr class="lvTot"><td>Poora din</td>'+lvCells(T)+'</tr></tbody></table></div></div>';};
-    h+=tableFor('ALL',calls,vis,'Sab CRM milake',T=>T.entries+' call · '+T.cust+' customer');
+    h+=tableFor('ALL',calls,vis,'Sab CRM milake',T=>T.entries+' call · '+T.cust+' customer · '+crms.length+' CRM ne kaam kiya');
+    if(!crms.length)h+='<p class="help" style="margin-top:10px">'+(d.isToday?'Aaj abhi tak kisi CRM ne call nahi ki.':'Is din kisi CRM ne call nahi ki.')+'</p>';
     crms.forEach(c=>{const L=calls.filter(x=>x.crm===c),V=vis.filter(v=>v.crm===c);const lt=L.length?L[L.length-1].t:'';
-      h+=tableFor(c,L,V,esc(c),T=>T.entries+' call · '+(lt?'aakhri call '+lvTime(lt)+(d.isToday&&now-Date.parse(lt)>60000?' ('+lvAgo(now-Date.parse(lt))+' pehle)':''):'<b style="color:#b91c1c">'+(d.isToday?'aaj koi call nahi':'koi call nahi')+'</b>'));});
+      h+=tableFor(c,L,V,esc(c),T=>T.entries+' call · '+(lt?'aakhri call '+lvTime(lt)+(d.isToday&&now-Date.parse(lt)>60000?' ('+lvAgo(now-Date.parse(lt))+' pehle)':''):'visit update kiya'));});
     h+='</section>';
     // 3) Funnel — alag hissa, apne control ke saath
     h+='<section class="lvCard" id="lvFunnelCard"><div class="lvHeadRow"><div><h2>CRM Funnel — customer kahan tak pahunche</h2><div class="sub">Apne aap update hota hai · neeche se CRM aur din chuno · andaza lagao ki aage kitna maal bik sakta hai</div></div></div>'+
