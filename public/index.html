@@ -881,8 +881,9 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     for(const v of last.values()){if(v==='Not Picked'){r.rnr++;continue;}r.conn++;if(v==='Visit Scheduled')r.visit++;else if(LV_INT.includes(v))r.int++;else if(v==='Call Later')r.later++;else if(v==='No Requirement')r.ni++;}
     (vis||[]).forEach(v=>{if(v.actual&&['Done','Converted'].includes(v.status)&&(k==null||lvSlot(lvHour(v.actual))===k))r.came++;if(v.status==='Converted'&&v.updated&&(k==null||lvSlot(lvHour(v.updated))===k))r.sold++;});
     return r;}
-  async function loadLive(force){
-    if(LV.busy||S.session?.role!=='Owner')return;LV.busy=true;const epoch=S.epoch;
+  function loadLive(force){if(LV.forceNext){force=true;LV.forceNext=false;}if(LV.busy&&LV.p)return LV.p;LV.p=loadLiveRun(force);return LV.p;}
+  async function loadLiveRun(force){
+    if(S.session?.role!=='Owner')return;LV.busy=true;const epoch=S.epoch;
     const wantF=force||!LV.funnel||Date.now()-LV.funnelAt>900000;
     try{const d=await rpc('getLiveToday',[LV.day||'',wantF]);if(epoch!==S.epoch)return;LV.data=d;LV.at=Date.now();if(d.funnel){LV.funnel=d.funnel;LV.funnelAt=Date.now();}renderLive();}
     catch(e){try{console.error('Aaj ki calling',e);}catch(_){}if(epoch===S.epoch&&!LV.data)$('ohLive').innerHTML='<div class="notice err">Aaj ki calling load nahi hui: '+esc(e.message)+'</div>';}
@@ -1009,7 +1010,8 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const fp=e.target.closest('[data-lv-fper]');if(fp){LV.fPer=fp.dataset.lvFper;LV.fx=null;const rg=$('lvFRange');if(rg)rg.hidden=LV.fPer!=='custom';document.querySelectorAll('[data-lv-fper]').forEach(b=>b.classList.toggle('on',b===fp));renderFunnel();return;}
     if(e.target.closest('[data-lv-odall]')){LV.odAll=!LV.odAll;renderLive();return;}
     if(e.target.closest('[data-lv-today]')){LV.day='';loadLive();return;}
-    if(e.target.closest('[data-lv-refresh]')){LV.fx=null;loadLive(true);return;}
+    const ub=e.target.closest('[data-lv-refresh]');if(ub){if(ub.disabled)return;LV.fx=null;ub.disabled=true;ub.textContent='Update ho raha hai…';
+      loadLive(true).then(()=>{const nb=document.querySelector('[data-lv-refresh]');if(nb){nb.textContent='✓ Update ho gaya';nb.disabled=true;setTimeout(()=>{if(nb.isConnected){nb.textContent='↻ Update';nb.disabled=false;}},2000);}}).catch(()=>{});return;}
   });
   $('ohLive').addEventListener('change',e=>{if(e.target.id==='lvDay'){LV.day=e.target.value;loadLive();}if(e.target.id==='lvSCrm'){LV.sCrm=e.target.value;renderStates();}if(e.target.id==='lvFCrm'){LV.fCrm=e.target.value;LV.fx=null;renderFunnel();}if(e.target.id==='lvFFrom'||e.target.id==='lvFTo'){LV.fFrom=$('lvFFrom').value;LV.fTo=$('lvFTo').value;LV.fx=null;renderFunnel();}});
   setInterval(()=>{if(S.page==='owner'&&!document.hidden&&LV.data?.isToday&&Date.now()-LV.at>=115000)loadLive();},15000);
@@ -1138,7 +1140,8 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   function ohPresetRange(kind){const today=toISTInput(new Date()).slice(0,10);let from=today,to=today;const shift=d=>new Date(Date.parse(today+'T00:00:00Z')+d*86400000).toISOString().slice(0,10);if(kind==='yesterday')from=to=shift(-1);if(kind==='week')from=shift(-6);if(kind==='month')from=today.slice(0,8)+'01';return [from,to];}
   function ohSyncDates(){const [f,t]=ohDates();$('ohFrom').value=f;$('ohTo').value=t;let on='';OH_PRESETS.forEach(([k])=>{const [a,b]=ohPresetRange(k);if(a===f&&b===t&&!on)on=k;});document.querySelectorAll('[data-oh-preset]').forEach(b=>{b.classList.toggle('on',b.dataset.ohPreset===on);b.setAttribute('aria-pressed',String(b.dataset.ohPreset===on));});}
   function ohDateText(){const [f,t]=ohDates();return f===t?reportDateLabel(f):reportDateLabel(f)+' se '+reportDateLabel(t);}
-  async function loadHome(){
+  function loadHome(){OH.p=loadHomeRun();return OH.p;}
+  async function loadHomeRun(){
     const [f,t]=ohDates();if(!f||!t)return;const n=++OH.seq,epoch=S.epoch;ohSyncDates();
     if(!OH.home)$('ownerHome').innerHTML='<p class="help">Dashboard load ho raha hai…</p>';
     try{const [home,sum]=await Promise.all([rpc('getOwnerHome',[f,t]),rpc('getOwnerSummary')]);if(n!==OH.seq||epoch!==S.epoch)return;OH.home=home;OH.sum=sum;renderHome();}
@@ -1431,7 +1434,11 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   $('reportPrev').addEventListener('click',()=>{if(!S.reportLoading&&S.reportApplied)loadCallReport(Math.max(0,S.reportOffset-50));});
   $('reportNext').addEventListener('click',()=>{if(!S.reportLoading&&S.reportApplied&&S.reportHasMore)loadCallReport(S.reportOffset+50);});
   $('ownerLive').addEventListener('toggle',()=>{if($('ownerLive').open&&S.page==='owner'&&S.session?.role==='Owner')loadOwner();});
-  $('callsRefresh').addEventListener('click',()=>{persistCallDraft();fresh(()=>loadCalls())});$('ownerRefresh').addEventListener('click',()=>fresh(()=>loadOwnerView()));$('legacyRefresh').addEventListener('click',()=>fresh(()=>loadLegacy()));
+  $('callsRefresh').addEventListener('click',()=>{persistCallDraft();fresh(()=>loadCalls())});$('ownerRefresh').addEventListener('click',async()=>{const b=$('ownerRefresh');if(b.dataset.busy)return;b.dataset.busy='1';const old=b.textContent;b.textContent='↻ Refresh ho raha hai…';
+    readCache.clear();LV.fx=null;LV.forceNext=true;fresh(()=>loadOwnerView());
+    try{await Promise.all([LV.p,OH.p].filter(Boolean));b.textContent='✓ Naya data aa gaya';notice('excelMessage','Dashboard ka naya data aa gaya — '+new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'}),'ok');}
+    catch(e){b.textContent='⚠ Refresh nahi hua';}
+    setTimeout(()=>{b.textContent=old;delete b.dataset.busy;},2500);});$('legacyRefresh').addEventListener('click',()=>fresh(()=>loadLegacy()));
   $('callHistoryBtn').addEventListener('click',()=>{if(S.lead)openDrawer(S.lead.id)});$('dialLink').addEventListener('click',()=>{$('dialNotice').hidden=false;});
   $('ownerSearch').addEventListener('input',()=>{nextSeq('owner');clearTimeout(S.ownerTimer);S.ownerTimer=setTimeout(loadOwner,300);});$('globalSearch').addEventListener('input',()=>{nextSeq('search');clearTimeout(S.searchTimer);$('searchResults').innerHTML='';S.searchTimer=setTimeout(searchCustomers,300);});
   $('downloadBulkTemplateBtn').addEventListener('click',()=>{
