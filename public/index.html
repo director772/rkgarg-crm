@@ -27,6 +27,28 @@
 .ohOverlay{z-index:44}.ohDrill{z-index:45;width:min(600px,100%)}.ohDrill.inline{grid-column:1/-1;position:static;width:auto;max-width:none;box-shadow:0 6px 24px #1018281f;border:2px solid #2563eb;border-radius:16px;margin:0 0 18px;padding:18px 20px;scroll-margin-top:84px;overflow:visible}.ohBox{border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.55;margin-bottom:12px}.ohBox b.t{display:block;font-size:11px;letter-spacing:.3px;margin-bottom:4px}.ohBox.m{background:#eff6ff;border:1px solid #bfdbfe;color:#1e293b}.ohBox.s{background:#f5f3ff;border:1px solid #ddd6fe;color:#2e1065}.ohBox.t2{background:#fff7ed;border:1px solid #fdba74;color:#7c2d12}
 .ohItem{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}.ohItem .top2{display:flex;justify-content:space-between;gap:8px;align-items:center}.ohItem .small{margin-top:3px}.ohFlag{font-size:12px;font-weight:700;color:#9a3412;background:#fff7ed;border-radius:6px;padding:6px 8px;margin-top:6px}.ohResp{flex:none;font-size:11px;font-weight:750;border-radius:6px;padding:3px 8px;background:#f2f4f7}
 @media(max-width:900px){.ohGrid,.ohMisGrid{grid-template-columns:1fr}.ohKpis{grid-template-columns:repeat(2,1fr)}.ohHBar{grid-template-columns:110px minmax(0,1fr) 44px}.ohCrm{grid-template-columns:96px minmax(0,1fr) 70px}}
+
+/* ---- Mobile / tablet: badi tables side me scroll hongi, pehla column (Time / CRM) chipka rahega ---- */
+@media(max-width:900px){
+  .lvCrmBlock .lvTable{min-width:880px}
+  .lvOd .lvTable,.lvCalls{min-width:680px}
+  .lvPlanT{min-width:420px}
+  .lvCrmBlock .lvTable th,.lvCrmBlock .lvTable td{white-space:nowrap}
+  .lvCrmBlock .lvTable th{white-space:normal;min-width:62px}
+  .lvCrmBlock .lvTable th:first-child,.lvCrmBlock .lvTable td:first-child{position:sticky;left:0;z-index:1;background:#fff;box-shadow:2px 0 0 #e5e7eb}
+  .lvCrmBlock .lvTable tr.now td:first-child{background:#fef2f2}.lvCrmBlock .lvTable tr.lvTot td:first-child{background:#f8fafc}
+  .lvCrmBlock>div[style*=overflow]::after{content:'← side me khiskao →';display:block;text-align:center;font-size:11px;color:#94a3b8;padding:4px 0}
+  .lvCard{padding:14px 12px}.lvCrmHead{font-size:15px}.lvHeadAct{flex-wrap:wrap}
+  .lvFunSum{grid-template-columns:1fr;gap:12px}.lvFunSum b{font-size:22px}
+  .lvFxBan,.lvFxOkRow{flex-direction:column;align-items:stretch;text-align:left}
+  .lvSlTop{flex-wrap:wrap;gap:4px}
+}
+@media(max-width:520px){
+  .ohTable{min-width:440px}.ohTable th,.ohTable td{word-break:normal;overflow-wrap:normal;white-space:nowrap}.ohTable thead th{white-space:normal;min-width:70px}
+  .lvFunRow,.lvFunPct{grid-template-columns:96px 1fr}.lvFunName{font-size:12px}.lvFunShape{height:36px;font-size:14px}.lvFunPct span{font-size:10px;padding:1px 5px}
+  .lvSRow{grid-template-columns:110px 1fr 36px}.lvSName{font-size:13px}
+  .lvFPer .ohChip{padding:6px 10px;font-size:12.5px}
+}
 </style>
 </head>
 <body>
@@ -968,7 +990,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
       '<div class="lvAnd2"><div class="lvAndT">Andaza lagao — aage kitna maal bikega?</div><div class="small" style="margin-bottom:10px">1) Kitne customer ko call karoge, wo chuno. 2) Neeche har step ka % abhi tak ke asli % pe set hai — chaho to badlo (jaise "agar 40% interested ho jayein to?"). Upar funnel turant badlega.</div>'+
       '<div class="lvSl lvSlMain"><div class="lvSlTop"><span><i style="background:'+LV_FC[0]+'"></i>Rozana kitne customer ko call karoge? <small style="font-weight:500;color:#475569">(jaise 150)</small></span><span><input type="number" id="lvSnN" min="0" step="10" class="lvNumIn"> <small id="lvSnNr">(abhi tak kul '+real[0]+' customer)</small></span></div><input type="range" id="lvSN" data-lv-sn min="0" max="'+nMax+'" step="1" style="accent-color:'+LV_FC[0]+'"></div>'+
       '<div class="lvFunCtl">'+[1,2,3,4,5].map(j=>'<div class="lvSl"><div class="lvSlTop"><span><i style="background:'+LV_FC[j]+'"></i>'+LV_FQ[j]+'</span><b id="lvSr'+j+'"></b></div><input type="range" id="lvSP'+j+'" data-lv-sp="'+j+'" min="0" max="100" step="1" style="accent-color:'+LV_FC[j]+'"><div class="small">asli: '+rr[j]+'% ('+real[j-1]+' me se '+real[j]+' customer)</div>'+(lvWeak(real,j)?'<div class="lvWarn">⚠ Is step ka asli data bahut kam hai ('+real[j-1]+' me se sirf '+real[j]+(real[j-1]&&real[j]===real[j-1]?' — isliye '+rr[j]+'% dikhta hai, jo sahi andaza nahi':'')+')'+(j===4?'. Lagta hai CRM visit aane ke baad app me “Done” mark nahi kar rahe':'')+'. 👉 Plan me ye % aapko khud daalna hai (aapke tajurbe se) — wo yaad rahega.</div>':'')+'</div>').join('')+'</div>'+
-      '<div class="lvPlan"><div class="lvAndT" style="font-size:15px">Team ko kya target dena hai</div><table class="lvTable lvSimple"><thead><tr><th>Step</th><th>Rozana</th><th>Hafte me (6 din)</th><th>Mahine me (26 din)</th></tr></thead><tbody id="lvPlanBody"></tbody></table></div></div>';
+      '<div class="lvPlan"><div class="lvAndT" style="font-size:15px">Team ko kya target dena hai</div><div style="overflow-x:auto"><table class="lvTable lvSimple lvPlanT"><thead><tr><th>Step</th><th>Rozana</th><th>Hafte me (6 din)</th><th>Mahine me (26 din)</th></tr></thead><tbody id="lvPlanBody"></tbody></table></div></div></div>';
     paintFunnel(real);if(keptF)ohDrillRestore();
   }
   function paintFunnel(real){
