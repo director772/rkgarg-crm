@@ -949,9 +949,9 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   function lvPlan(){return LV.mode==='plan'&&LV.fx?LV.fx:null;}
   function lvSavePlan(){try{localStorage.setItem('crm_funnel_plan',JSON.stringify(LV.fx));}catch(_){}}
   function lvLoadPlan(){try{const p=JSON.parse(localStorage.getItem('crm_funnel_plan')||'null');if(p&&typeof p.n==='number'&&Array.isArray(p.rates))return p;}catch(_){}return null;}
-  function lvCnt(x){return x>0&&x<1?'1 se kam':(Math.round(x)).toLocaleString('en-IN');}
+  function lvCnt(x){return x>0?Math.round(x).toLocaleString('en-IN'):'0';}
   function lvRealRates(real){return real.map((x,j)=>j?(real[j-1]?Math.round(x*1000/real[j-1])/10:0):0);}
-  function lvFxValues(real){const P=lvPlan(),r=P?P.rates:lvRealRates(real),n=P?P.n:real[0];const v=[n];for(let j=1;j<6;j++)v[j]=v[j-1]*(r[j]||0)/100;return v;}
+  function lvFxValues(real){const P=lvPlan();if(!P)return real.slice();const r=P.rates,n=P.n;const v=[n];for(let j=1;j<6;j++)v[j]=v[j-1]*(r[j]||0)/100;return v;}
   function renderFunnel(){
     const box=$('lvFunnelRes');if(!box)return;const real=lvFunnelData();if(!real){box.innerHTML='<p class="help">Funnel load ho raha hai…</p>';return;}
     if(!real[0]&&!lvPlan()){box.innerHTML='<p class="help">Is chunaav me koi customer nahi.</p>';return;}
@@ -968,7 +968,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
   function paintFunnel(real){
     const P=lvPlan(),r=P?P.rates:lvRealRates(real),n=P?P.n:real[0],v=lvFxValues(real).map(x=>Math.round(x));
     const vf=lvFxValues(real);v.forEach((x,i)=>{$('lvFv'+i).textContent=lvCnt(vf[i]);if(i)$('lvFp'+i).textContent='↓ '+(P?r[i]:(v[i-1]?Math.round(x*100/v[i-1]):0))+'% aage badhe ('+lvCnt(vf[i])+')';});
-    const pb=$('lvPlanBody');if(pb)pb.innerHTML=LV_FN.map((nm,i)=>'<tr'+(i===5?' class="lvTot"':'')+'><td><b>'+(i?nm:'Customer ko call')+'</b></td><td>'+lvCnt(vf[i])+'</td><td>'+lvCnt(vf[i]*6)+'</td><td>'+lvCnt(vf[i]*26)+'</td></tr>').join('');
+    const pb=$('lvPlanBody');if(pb&&!P)pb.innerHTML='<tr><td colspan="4" style="text-align:left;padding:12px">Target dekhne ke liye upar <b>"Rozana kitne customer ko call karoge"</b> me number daalo (jaise 150) ya <b>🔮 Apna plan</b> dabao.</td></tr>';else if(pb)pb.innerHTML=LV_FN.map((nm,i)=>'<tr'+(i===5?' class="lvTot"':'')+'><td><b>'+(i?nm:'Customer ko call')+'</b></td><td>'+lvCnt(vf[i])+'</td><td>'+lvCnt(Math.round(vf[i])*6)+'</td><td>'+lvCnt(Math.round(vf[i])*26)+'</td></tr>').join('');
     const sn=$('lvSN');if(sn&&document.activeElement!==sn)sn.value=n;const ni=$('lvSnN');if(ni&&document.activeElement!==ni)ni.value=Math.round(n);
     for(let j=1;j<6;j++){const sp=$('lvSP'+j);if(sp&&document.activeElement!==sp)sp.value=r[j];const t=$('lvSr'+j);if(t)t.textContent=r[j]+'% ('+lvCnt(vf[j])+' customer)';}
     $('lvFsConv').textContent=(v[0]?(v[5]*100/v[0]).toFixed(1):'0')+'%';$('lvFsPipe').textContent=Math.max(0,v[2]-v[5]);$('lvFsPipeHow').textContent=v[2]+' interested − '+v[5]+' ne maal liya = '+Math.max(0,v[2]-v[5])+' · in par mehnat karo';$('lvFsWon').textContent=v[5];
