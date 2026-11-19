@@ -980,16 +980,19 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     if(e.target.closest('[data-lv-sn]')||e.target.id==='lvSnN'){ensure();LV.fx.n=Math.max(0,Math.round(Number(e.target.value)||0));lvSavePlan();paintFunnel(real);const sn=$('lvSN');if(sn&&LV.fx.n>Number(sn.max))sn.max=String(LV.fx.n*2);return;}
     const sp=e.target.closest('[data-lv-sp]');if(sp){ensure();LV.fx.rates[Number(sp.dataset.lvSp)]=Math.max(0,Math.min(100,Number(sp.value)||0));lvSavePlan();paintFunnel(real);return;}
   });
+  // Purane din ki report me "Last call" usi din ki aakhri call dikhegi (baad ki call nahi), taki confusion na ho.
+  function lvFmtFull(t){const x=new Date(Date.parse(t)+19800000),M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],h=x.getUTCHours(),p2=n=>String(n).padStart(2,'0');return p2(x.getUTCDate())+'-'+M[x.getUTCMonth()]+'-'+String(x.getUTCFullYear()).slice(2)+' '+p2(h%12||12)+':'+p2(x.getUTCMinutes())+' '+(h<12?'AM':'PM');}
+  function lvDayLast(d,lead){let t='';(d.calls||[]).forEach(c=>{if(c.lead===lead&&c.t>t)t=c.t;});return t;}
   function lvOpenCell(sig){
     const d=LV.data;if(!d)return;const parts=sig.split('|'),f=parts.pop(),k=parts.pop(),key=parts.join('|');
     const lbl=(LV_F.find(x=>x[0]===f)||['',''])[1],who=key==='ALL'?'Sab CRM':key;
     const slots=k==='all'?[...new Set(d.calls.map(c=>lvSlot(lvHour(c.t))).concat((d.visits||[]).map(v=>lvSlot(lvHour(v.actual||v.updated||d.nowIso)))))]:[Number(k)];
     const rows=[];
     for(const sk of slots){
-      if(f==='came'||f==='sold'){(d.visits||[]).forEach(v=>{if(key!=='ALL'&&v.crm!==key)return;const t=f==='came'?(['Done','Converted'].includes(v.status)?v.actual:''):(v.status==='Converted'?v.updated:'');if(!t||lvSlot(lvHour(t))!==sk)return;const nm=(d.names||{})[v.lead]||[];rows.push({id:v.lead,name:nm[0]||'Customer',mobile:nm[1]||'',crm:v.crm,response:(f==='came'?'Visit aaya':'Maal liya')+' · '+lvTime(t),lastCall:nm[2]||'',nextDisplay:nm[3]||'—',note:''});});continue;}
+      if(f==='came'||f==='sold'){(d.visits||[]).forEach(v=>{if(key!=='ALL'&&v.crm!==key)return;const t=f==='came'?(['Done','Converted'].includes(v.status)?v.actual:''):(v.status==='Converted'?v.updated:'');if(!t||lvSlot(lvHour(t))!==sk)return;const nm=(d.names||{})[v.lead]||[];const dl=lvDayLast(d,v.lead);rows.push({id:v.lead,name:nm[0]||'Customer',mobile:nm[1]||'',crm:v.crm,response:(f==='came'?'Visit aaya':'Maal liya')+' · '+lvTime(t),lastCall:dl?lvFmtFull(dl):(d.isToday?(nm[2]||''):'is din call nahi hui'),nextDisplay:nm[3]||'—',note:''});});continue;}
       const last=new Map();d.calls.forEach(c=>{if(!c.lead||(key!=='ALL'&&c.crm!==key)||lvSlot(lvHour(c.t))!==sk)return;const o=last.get(c.lead)||{fresh:false};o.resp=c.resp;o.t=c.t;o.note=c.note;o.crm=c.crm;o.fresh=o.fresh||c.fresh;last.set(c.lead,o);});
       last.forEach((o,id)=>{const r=o.resp,ok=f==='entries'||(f==='naye'&&o.fresh)||(f==='fu'&&!o.fresh)||(f==='conn'&&r!=='Not Picked')||(f==='rnr'&&r==='Not Picked')||(f==='int'&&LV_INT.includes(r)&&r!=='Visit Scheduled')||(f==='visit'&&r==='Visit Scheduled')||(f==='later'&&r==='Call Later')||(f==='ni'&&r==='No Requirement');if(!ok)return;
-        const nm=(d.names||{})[id]||[];rows.push({id,name:nm[0]||'Customer',mobile:nm[1]||'',crm:o.crm,response:lvRespWords(r)+' · '+lvTime(o.t)+(o.fresh?' · naya':' · follow-up'),lastCall:nm[2]||'',nextDisplay:nm[3]||'—',note:o.note||''});});
+        const nm=(d.names||{})[id]||[];rows.push({id,name:nm[0]||'Customer',mobile:nm[1]||'',crm:o.crm,response:lvRespWords(r)+' · '+lvTime(o.t)+(o.fresh?' · naya':' · follow-up'),lastCall:lvFmtFull(k==='all'?(lvDayLast(d,id)||o.t):o.t),nextDisplay:nm[3]||'—',note:o.note||''});});
     }
     rows.sort((a,b)=>String(b.response).localeCompare(String(a.response)));
     const when=k==='all'?(d.isToday?'aaj poora din':reportDateLabel(d.day)+' poora din'):lvSlotWords(Number(k));
