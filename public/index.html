@@ -950,14 +950,13 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const keptF=ohDrillSave(box);
     box.innerHTML='<div class="lvFunHint">👇 Funnel ke kisi bhi step pe dabao — us step ke customer yahin neeche khul jayenge (last call ke saath)</div><div id="lvFxNote"></div><div class="lvFun">'+LV_FN.map((n,i)=>(i?'<div class="lvFunPct"><span id="lvFp'+i+'"></span></div>':'')+'<div class="lvFunRow lvClick" data-lv-fstage="'+i+'" title="Dabao — customer list"><span class="lvFunName">'+n+' ›</span><div class="lvFunShape" style="--w:'+(100-i*11)+'%;background:'+LV_FC[i]+'"><span id="lvFv'+i+'"></span></div></div>').join('')+'</div>'+
       '<div class="lvFunSum"><div><span>100 me se kitne ne maal liya</span><b id="lvFsConv" style="color:#16a34a"></b><small>kul customer me se maal liya</small></div><div><span>Interested hain par maal abhi nahi liya</span><b id="lvFsPipe"></b><small id="lvFsPipeHow"></small></div><div><span>Maal liya</span><b id="lvFsWon" style="color:#2563eb"></b><small>customer</small></div></div>'+
-      '<div class="lvFunCtl"><div class="lvFunAvg">Slider hilao — dekho agar customer badhein to aage kitne honge</div>'+
+      '<div class="lvFunCtl"><div class="lvFunAvg">Koi bhi slider khicho — poora funnel abhi tak ke asli % ke hisaab se badal jayega<br><small style="font-weight:500;color:#475569">Jaise: Interested 400 karo → upar dikhega kitne customer chahiye aur kitno se baat karni hogi, neeche dikhega kitni visit hongi aur kitne maal lenge</small></div>'+
       LV_FN.map((n,i)=>'<div class="lvSl"><div class="lvSlTop"><span><i style="background:'+LV_FC[i]+'"></i>'+n+'</span><b id="lvSn'+i+'"></b></div><input type="range" id="lvS'+i+'" data-lv-sl="'+i+'" min="0" step="1" style="accent-color:'+LV_FC[i]+'"></div>').join('')+'</div>';
     paintFunnel(v,real);if(keptF)ohDrillRestore();
   }
   function paintFunnel(vf,real){
     const v=vf.map(x=>Math.round(x));
-    const top=Math.max(100,real[0]*3,v[0]);
-    v.forEach((x,i)=>{const sl=$('lvS'+i);if(!sl)return;sl.max=i?v[i-1]:top;sl.value=x;$('lvSn'+i).textContent=x+(real[i]!==x?' (asli '+real[i]+')':'');$('lvFv'+i).textContent=x.toLocaleString('en-IN');if(i)$('lvFp'+i).textContent='↓ '+(v[i-1]?Math.round(x*100/v[i-1]):0)+'% aage badhe';});
+    v.forEach((x,i)=>{const sl=$('lvS'+i);if(!sl)return;const mx=Math.max(20,real[i]*5,Math.ceil(x));if(document.activeElement!==sl)sl.max=mx;sl.value=x;$('lvSn'+i).textContent=x+(real[i]!==x?' (asli '+real[i]+')':'');$('lvFv'+i).textContent=x.toLocaleString('en-IN');if(i)$('lvFp'+i).textContent='↓ '+(v[i-1]?Math.round(x*100/v[i-1]):0)+'% aage badhe';});
     $('lvFsConv').textContent=(v[0]?(v[5]*100/v[0]).toFixed(1):'0')+'%';$('lvFsPipe').textContent=Math.max(0,v[2]-v[5]);$('lvFsPipeHow').textContent=v[2]+' interested − '+v[5]+' ne maal liya = '+Math.max(0,v[2]-v[5])+' · in par mehnat karo';$('lvFsWon').textContent=v[5];
     $('lvFxNote').innerHTML=LV.fx?'<div class="lvFxBan">Andaza dekh rahe ho — ye asli data nahi hai. <button type="button" class="lvResetBtn" data-lv-freset>↺ Asli data pe wapas</button></div>':'<div class="lvFxOkRow"><span class="lvFxOk">✓ Asli data dikh raha hai — '+esc(LV.fCrm||'Sab CRM')+'</span><button type="button" class="lvResetBtn" data-lv-freset>↺ Asli data pe wapas</button></div>';
   }
@@ -965,7 +964,10 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const sl=e.target.closest('[data-lv-sl]');
     if(sl){const real=lvFunnelData();if(!real)return;const i=Number(sl.dataset.lvSl),v=(LV.fx||real.slice()),old=v[i]||0,nv=Math.round(Number(sl.value)||0);v[i]=nv;
       // neeche wale step usi % me badhenge/ghatenge
-      for(let j=i+1;j<v.length;j++){v[j]=old?v[j]*nv/old:0;if(v[j]>v[j-1])v[j]=v[j-1];}
+      // Asli % ke hisaab se poora funnel: neeche wale = upar × %, upar wale = neeche ÷ %
+      const rt=real.map((x,j)=>j&&real[j-1]?x/real[j-1]:0);
+      for(let j=i+1;j<v.length;j++)v[j]=v[j-1]*rt[j];
+      for(let j=i-1;j>=0;j--)v[j]=rt[j+1]?v[j+1]/rt[j+1]:v[j];
       LV.fx=v;paintFunnel(v,real);return;}
   });
   function lvOpenCell(sig){
