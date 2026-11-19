@@ -9,7 +9,9 @@ import {
   reportDate, validRequestId, stableJson, sha256Hex
 } from './util.js';
 
-export const RESPONSE_TO_STATUS = { 'Interested': 'interested', 'Call Later': 'callback', 'Not Picked': 'callback', 'Catalogue Sent': 'interested', 'Price Poocha': 'interested', 'Visit Scheduled': 'visit', 'No Requirement': 'closed' };
+export const RESPONSE_TO_STATUS = { 'Interested': 'interested', 'Call Later': 'callback', 'Not Picked': 'callback', 'Catalogue Sent': 'interested', 'Price Poocha': 'interested', 'Visit Scheduled': 'visit', 'No Requirement': 'closed', 'Shop Visit Done': 'interested', 'Product Purchased': 'interested' };
+/** Customer dukaan aaya / maal liya — call card se seedha. Isse Visit record bhi Done / Converted hota hai. */
+const VISIT_RESULT = ['Shop Visit Done', 'Product Purchased'];
 const ALLOWED_ACTIONS = ['Call', 'WhatsApp', 'Catalogue Follow-up', 'Visit Reminder', 'Close Lead'];
 export const LEAD_FIELDS = ['ID', 'Name', 'Mobile', 'City', 'Source', 'Product', 'CRM', 'Status', 'Disposition', 'Score', 'LastCallAt', 'NextActionType', 'NextFollowupAt', 'Note', 'CreatedAt', 'CreatedBy', 'LastUpdatedAt', 'LastUpdatedBy', 'RowVersion'];
 
@@ -486,7 +488,7 @@ async function misCore(env, s, fromDate, toDate, r, withHistory) {
     m.called++;
     if (!x.picked) { m.rnr++; return; }
     m.connected++;
-    if (x.last === 'Visit Scheduled') m.hot++;
+    if (x.last === 'Visit Scheduled' || VISIT_RESULT.includes(x.last)) m.hot++;
     else if (MIS_WARM.includes(x.last)) m.warm++;
     else if (x.last === 'Call Later') m.cold++;
     if (x.last === 'No Requirement') m.notInterested++;
@@ -548,7 +550,7 @@ export async function getOwnerHome(env, s, fromDate, toDate) {
   c.total.forEach(x => {
     const m = c.oldIds.has(x.lead) ? nw.purane : nw.naye;
     m.called++;
-    if (x.picked) { m.connected++; if (MIS_WARM.includes(x.last) || x.last === 'Visit Scheduled') m.interested++; } else m.rnr++;
+    if (x.picked) { m.connected++; if (MIS_WARM.includes(x.last) || x.last === 'Visit Scheduled' || VISIT_RESULT.includes(x.last)) m.interested++; } else m.rnr++;
   });
   const crmCalls = misBlocks(c).filter(b => b.name !== 'Total').map(b => ({ crm: b.name, entries: c.entries.get(b.name) || 0, called: b.called, connected: b.connected, rnr: b.rnr }));
   return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), entries: c.entries.get('Total') || 0, mis: misBlocks(c), newOld: nw, crmCalls };
@@ -578,7 +580,7 @@ function listFrom(c, key, arg) {
   if (CALL_KEYS.includes(key)) {
     const pool = key === 'crm' ? [...c.per.values()].filter(x => x.crm === (arg || 'CRM khaali')) : c.total;
     const keep = {
-      called: () => true, connected: x => x.picked, rnr: x => !x.picked, hot: x => x.picked && x.last === 'Visit Scheduled',
+      called: () => true, connected: x => x.picked, rnr: x => !x.picked, hot: x => x.picked && (x.last === 'Visit Scheduled' || VISIT_RESULT.includes(x.last)),
       warm: x => x.picked && MIS_WARM.includes(x.last), cold: x => x.picked && x.last === 'Call Later', quote: x => x.price, catalogue: x => x.catalogue,
       future: c.isFuture, notint: x => x.picked && x.last === 'No Requirement', naye: x => !c.oldIds.has(x.lead), purane: x => c.oldIds.has(x.lead), crm: () => true
     }[key];
@@ -621,7 +623,7 @@ export async function getMisLists(env, s, fromDate, toDate) {
   return { fromDate, toDate, asOfDisplay: fmtDateTime(c.now), mis: misBlocks(c).find(b => b.name === 'Total'), lists };
 }
 
-const FUNNEL_INT = ['Interested', 'Catalogue Sent', 'Price Poocha', 'Visit Scheduled'];
+const FUNNEL_INT = ['Interested', 'Catalogue Sent', 'Price Poocha', 'Visit Scheduled', 'Shop Visit Done', 'Product Purchased'];
 function funnelLevel(l, v) {
   const d = l.Disposition || ''; let lvl = 0;
   if (l.LastCallAt || v) lvl = 1;
@@ -869,6 +871,7 @@ async function callLogPlan(db, s, leadId, crm, timing, x, stamp) {
 }
 /** Visit Scheduled response creates / reschedules the confirmed visit in the same save. */
 async function visitPlan(db, call, leadId, crm, user, stamp) {
+  if (VISIT_RESULT.includes(call.response)) return visitResultPlan(db, call, leadId, crm, user, stamp);
   if (call.response !== 'Visit Scheduled') return [];
   const active = await all(db, "SELECT * FROM Visits WHERE LeadID=? AND Status IN ('Planned','Rescheduled')", leadId);
   if (active.length > 1) fail('Multiple pending visits found. Resolve them in Manage visits first.');
@@ -878,6 +881,22 @@ async function visitPlan(db, call, leadId, crm, user, stamp) {
   if (!old) return [insertStmt(db, 'Visits', visit)];
   const { ID, ...rest } = visit;
   return [updateStmt(db, 'Visits', rest, 'ID=? AND Version=?', ID, Number(old.Version)), guardStmt(db, 'EXISTS (SELECT 1 FROM Visits WHERE ID=? AND Version=? AND UpdatedAt=?)', ID, visit.Version, stamp)];
+}
+/** "Shop Visit Done" → pending visit Done (na ho to aaj ki nayi Done visit). "Product Purchased" → visit Converted (na ho to nayi Converted visit). */
+async function visitResultPlan(db, call, leadId, crm, user, stamp) {
+  const done = call.response === 'Product Purchased' ? 'Converted' : 'Done';
+  const rows = await all(db, "SELECT * FROM Visits WHERE LeadID=? AND Status IN ('Planned','Rescheduled','Done') ORDER BY UpdatedAt DESC", leadId);
+  const pending = rows.filter(v => ['Planned', 'Rescheduled'].includes(v.Status));
+  const old = done === 'Converted' ? (pending[0] || rows.find(v => v.Status === 'Done') || null) : (pending[0] || null);
+  if (done === 'Done' && !old) {
+    // Aaj pehle se Done visit hai to dobara mat banao
+    const today = dayKey(stamp);
+    if (rows.some(v => v.Status === 'Done' && v.ActualAt && dayKey(v.ActualAt) === today)) return [];
+  }
+  const note = call.note || (old && old.Note) || '';
+  if (!old) return [insertStmt(db, 'Visits', { ID: uuid(), LeadID: leadId, CRM: crm, PlannedDate: dayKey(stamp), Status: done, ActualAt: stamp, Note: note, Version: 1, UpdatedAt: stamp, UpdatedBy: user })];
+  const visit = { LeadID: leadId, CRM: old.CRM || crm, PlannedDate: old.PlannedDate || dayKey(stamp), Status: done, ActualAt: old.ActualAt || stamp, Note: note, Version: Number(old.Version) + 1, UpdatedAt: stamp, UpdatedBy: user };
+  return [updateStmt(db, 'Visits', visit, 'ID=? AND Version=?', old.ID, Number(old.Version)), guardStmt(db, 'EXISTS (SELECT 1 FROM Visits WHERE ID=? AND Version=? AND UpdatedAt=?)', old.ID, visit.Version, stamp)];
 }
 /** Update a lead only if nobody changed it since it was read (RowVersion). */
 function leadUpdate(db, before, after, requestId) {
