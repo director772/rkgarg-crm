@@ -38,6 +38,7 @@ const WITH_SESSION = {
   getSourceList: crm.getSourceList,
   getLiveToday: crm.getLiveToday,
   getFunnelList: crm.getFunnelList,
+  getStateList: crm.getStateList,
   createLead: crm.createLead,
   createLeadAndCall: crm.createLeadAndCall,
   updateLead: crm.updateLead,

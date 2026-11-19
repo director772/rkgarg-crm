@@ -3,6 +3,7 @@
 // so the existing screens work unchanged.
 import { all, first, stmt, insertStmt, updateStmt, guardStmt, auditStmt, isGuardFailure, isUniqueFailure } from './db.js';
 import { activeTeam, requireOwner } from './auth.js';
+import { stateOf } from './states.js';
 import {
   fail, uuid, iso, fmtDate, fmtDateTime, dayKey, text, normalizeMobile, isValidMobile,
   reportDate, validRequestId, stableJson, sha256Hex
@@ -635,15 +636,20 @@ async function funnelVisitMax(db) {
   return vMax;
 }
 async function funnelData(db) {
-  const [ls, vMax] = await Promise.all([all(db, 'SELECT ID, CRM, Disposition, LastCallAt, CreatedAt FROM Leads'), funnelVisitMax(db)]);
-  const blank = () => [0, 0, 0, 0, 0, 0, 0], tot = blank(), byCrm = {}, groups = {};
+  const [ls, vMax] = await Promise.all([all(db, 'SELECT ID, CRM, Disposition, LastCallAt, CreatedAt, City FROM Leads'), funnelVisitMax(db)]);
+  const blank = () => [0, 0, 0, 0, 0, 0, 0], tot = blank(), byCrm = {}, groups = {}, stG = {}, unknown = {};
   ls.forEach(l => {
     const lvl = funnelLevel(l, vMax.get(String(l.ID)) || 0), c = l.CRM || '(khaali)'; byCrm[c] = byCrm[c] || blank();
     const dk = l.CreatedAt && !isNaN(new Date(l.CreatedAt).getTime()) ? dayKey(new Date(l.CreatedAt)) : '', key = c + '|' + dk;
     groups[key] = groups[key] || [c, dk, blank()];
     for (let i = 0; i <= lvl; i++) { tot[i]++; byCrm[c][i]++; groups[key][2][i]++; }
+    // State: City ke naam se. Jo pakka na mile wo "Pata nahi".
+    const st = stateOf(l.City) || '', sk = st + '|' + dk + '|' + c;
+    stG[sk] = stG[sk] || [st, dk, c, 0, 0, 0]; stG[sk][3]++; if (lvl >= 3) stG[sk][4]++; if (lvl >= 6) stG[sk][5]++;
+    if (!st) { const raw = String(l.City || '').trim() || '(city khaali)'; unknown[raw] = (unknown[raw] || 0) + 1; }
   });
-  return { total: tot, byCrm, groups: Object.values(groups) };
+  const unk = Object.entries(unknown).sort((a, b) => b[1] - a[1]);
+  return { total: tot, byCrm, groups: Object.values(groups), states: Object.values(stG), unknownCities: unk.slice(0, 25), unknownKinds: unk.length };
 }
 /** Funnel ke kisi step pe dabao: wahan tak pahunche customer (last call ke saath). Sirf click pe chalta hai. */
 export async function getFunnelList(env, s, crm, from, upto, stage) {
@@ -658,6 +664,23 @@ export async function getFunnelList(env, s, crm, from, upto, stage) {
     const lvl = funnelLevel(l, vMax.get(String(l.ID)) || 0); if (lvl < stage) return;
     rows.push({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || '', lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '',
       nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '', _t: toIso(l.LastCallAt) || '' });
+  });
+  rows.sort((x, y) => (y._t || '').localeCompare(x._t || ''));
+  return { total: rows.length, rows: rows.slice(0, 1000).map(r => { delete r._t; return r; }), cut: rows.length > 1000 };
+}
+
+/** State bar pe dabao: us state ke customer (last call ke saath). Sirf click pe. */
+export async function getStateList(env, s, state, crm, from, upto) {
+  requireOwner(s);
+  state = String(state || ''); crm = String(crm || ''); from = String(from || ''); upto = String(upto || '');
+  const ls = await all(env.DB, 'SELECT ID, Name, Mobile, City, CRM, Disposition, LastCallAt, NextFollowupAt, Note, CreatedAt FROM Leads');
+  const rows = [];
+  ls.forEach(l => {
+    if ((stateOf(l.City) || '') !== state) return;
+    if (crm && (l.CRM || '(khaali)') !== crm) return;
+    if (from) { const dk = l.CreatedAt && !isNaN(new Date(l.CreatedAt).getTime()) ? dayKey(new Date(l.CreatedAt)) : ''; if (!dk || dk < from || (upto && dk > upto)) return; }
+    rows.push({ id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: (l.City ? 'City: ' + l.City + ' · ' : 'City khaali · ') + (l.Disposition || ''),
+      lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '', nextDisplay: fmtDateTime(toIso(l.NextFollowupAt)), note: l.Note || '', flag: '', _t: toIso(l.LastCallAt) || '' });
   });
   rows.sort((x, y) => (y._t || '').localeCompare(x._t || ''));
   return { total: rows.length, rows: rows.slice(0, 1000).map(r => { delete r._t; return r; }), cut: rows.length > 1000 };
