@@ -1096,7 +1096,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const keptF=ohDrillSave(box);
     box.innerHTML='<div class="lvFunHint">👇 Funnel ke kisi bhi step pe dabao — us step ke customer yahin neeche khul jayenge (last call ke saath)</div><div id="lvFxNote"></div><div class="lvFun">'+LV_FN.map((n,i)=>(i?'<div class="lvFunPct"><span id="lvFp'+i+'"></span></div>':'')+'<div class="lvFunRow lvClick" data-lv-fstage="'+i+'" title="Dabao — customer list"><span class="lvFunName">'+n+' ›</span><div class="lvFunShape" style="--w:'+(100-i*11)+'%;background:'+LV_FC[i]+'"><span id="lvFv'+i+'"></span></div></div>').join('')+'</div>'+
       '<div class="lvFunSum"><div><span>100 me se kitne ne maal liya</span><b id="lvFsConv" style="color:#16a34a"></b><small>kul customer me se maal liya</small></div><div><span>Interested hain par maal abhi nahi liya</span><b id="lvFsPipe"></b><small id="lvFsPipeHow"></small></div><div><span>Maal liya</span><b id="lvFsWon" style="color:#2563eb"></b><small>customer</small></div></div>'+
-      '<div class="lvAnd2"><div class="lvAndT">Andaza lagao — aage kitna maal bikega?</div><div class="small" style="margin-bottom:10px">1) Roz kitne alag customers ko call karoge, wo chuno. 2) Purane conversion % apne aap lagenge. Kisi bhi % ko badaloge toh uske baad ke estimates turant badlenge.</div>'+
+      '<div class="lvAnd2"><div class="lvAndT">Andaza lagao — aage kitna maal bikega?</div><div class="small" style="margin-bottom:10px">1) Roz kitne alag customers ko call karoge, wo chuno. 2) Purane conversion % apne aap lagenge. Call count badalne par neeche sab sliders move honge. Kisi stage ka customer slider kheenchkar aage ka andaza dekho.</div>'+
       '<div class="lvSl lvSlMain"><div class="lvSlTop"><span><i style="background:'+LV_FC[0]+'"></i>Rozana kitne customer ko call karoge?</span><span><input type="number" aria-label="Rozana alag customers" id="lvSnN" placeholder="Jaise 150" min="0" step="1" class="lvNumIn"> <small id="lvSnNr">(abhi tak kul '+real[0]+' customer)</small></span></div><input type="range" id="lvSN" data-lv-sn min="0" max="'+nMax+'" step="1" style="--lv-slider-color:'+LV_FC[0]+'"></div>'+
       '<div class="lvFunCtl">'+[1,2,3,4,5].map(j=>'<div class="lvSl"><div class="lvSlTop"><span><i style="background:'+LV_FC[j]+'"></i>'+LV_FQ[j]+'</span><b id="lvSr'+j+'"></b></div><input type="range" id="lvSP'+j+'" data-lv-sp="'+j+'" min="0" max="100" step="0.1" style="--lv-slider-color:'+LV_FC[j]+'"><div class="small" id="lvRateSource'+j+'"></div>'+'</div>').join('')+'</div>'+
       '<div class="lvPlan"><div class="lvAndT" style="font-size:15px">Team ko kya target dena hai</div><div style="overflow-x:auto"><table class="lvTable lvSimple lvPlanT"><thead><tr><th>Step</th><th>Rozana</th><th>Hafte me (6 din)</th><th>Mahine me (26 din)</th></tr></thead><tbody id="lvPlanBody"></tbody></table></div></div></div>';
@@ -1113,8 +1113,18 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     v.forEach((x,i)=>{$('lvFv'+i).textContent=count(vf[i]);if(i)$('lvFp'+i).textContent=!P&&lvWeak(real,i)?'↓ data kam ('+real[i-1]+' me se '+real[i]+')':'↓ '+(P?r[i]:(v[i-1]?Math.round(x*100/v[i-1]):0))+'% aage badhe ('+count(vf[i])+')';});
     const pb=$('lvPlanBody');if(pb&&!P)pb.innerHTML='<tr><td colspan="4" style="text-align:left;padding:12px">Target dekhne ke liye upar <b>"Rozana kitne customer ko call karoge"</b> me number daalo ya slider badlo.</td></tr>';else if(pb)pb.innerHTML=LV_FN.map((nm,i)=>'<tr'+(i===5?' class="lvTot"':'')+'><td><b>'+(i?nm:'Customer ko call')+'</b></td><td>'+count(vf[i])+'</td><td>'+count(vf[i]*6)+'</td><td>'+count(vf[i]*26)+'</td></tr>').join('');
     const sn=$('lvSN');paintFunnelSlider(sn,n);const ni=$('lvSnN');if(ni&&document.activeElement!==ni)ni.value=P?Math.round(n):'';
+    const baseline=lvFunnelData(true)||real;
     for(let j=1;j<6;j++){
-      paintFunnelSlider($('lvSP'+j),r[j]);
+      const slider=$('lvSP'+j);
+      const previous=P?vf[j-1]:0;
+      const reference=baseline[0]?300*baseline[j-1]/baseline[0]:0;
+      const scale=Math.max(1,reference);
+      slider.max=Math.ceil(scale*Math.pow(2,Math.max(0,Math.ceil(Math.log2(previous/scale))))*1000)/1000;
+      slider.step='any';
+      slider.disabled=!P||previous<=0;
+      slider.setAttribute('aria-label',LV_FN[j]+' ke estimated customers');
+      slider.value=P?vf[j]:0;
+      paintFunnelSlider(slider,slider.value);
       $('lvSr'+j).textContent=r[j]+'% ('+count(vf[j])+' customer)';
       $('lvRateSource'+j).textContent=P?P.sources[j]:'Asli data · '+real[j]+' / '+real[j-1]+(lvWeak(real,j)?' · data kam':'');
     }
@@ -1125,7 +1135,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const real=lvFunnelData();if(!real)return;
     const ensure=()=>{if(!lvPlan()){LV.fx=lvPlanStart(real);LV.mode='plan';}};
     if(e.target.closest('[data-lv-sn]')||e.target.id==='lvSnN'){ensure();LV.fx.n=Math.max(0,Math.round(Number(e.target.value)||0));lvSavePlan();const sn=$('lvSN');if(sn&&LV.fx.n>Number(sn.max))sn.max=String(LV.fx.n*2);paintFunnel(real);return;}
-    const sp=e.target.closest('[data-lv-sp]');if(sp){ensure();const jj=Number(sp.dataset.lvSp);LV.fx.sources[jj]='Aapka chuna hua %';LV.fx.rates[jj]=Math.max(0,Math.min(100,Number(sp.value)||0));if(lvWeak(real,jj))lvSaveGuess(jj,LV.fx.rates[jj]);lvSavePlan();paintFunnel(real);return;}
+    const sp=e.target.closest('[data-lv-sp]');if(sp){ensure();const jj=Number(sp.dataset.lvSp);LV.fx.sources[jj]='Aapka chuna hua %';const previous=lvFxValues(real)[jj-1];if(!previous)return;LV.fx.rates[jj]=Math.min(100,Math.round(1000*Number(sp.value)/previous)/10);if(lvWeak(real,jj))lvSaveGuess(jj,LV.fx.rates[jj]);lvSavePlan();paintFunnel(real);return;}
   });
   // Purane din ki report me "Last call" usi din ki aakhri call dikhegi (baad ki call nahi), taki confusion na ho.
   function lvFmtFull(t){const x=new Date(Date.parse(t)+19800000),M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],h=x.getUTCHours(),p2=n=>String(n).padStart(2,'0');return p2(x.getUTCDate())+'-'+M[x.getUTCMonth()]+'-'+String(x.getUTCFullYear()).slice(2)+' '+p2(h%12||12)+':'+p2(x.getUTCMinutes())+' '+(h<12?'AM':'PM');}
