@@ -1097,7 +1097,7 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     box.innerHTML='<div class="lvFunHint">👇 Funnel ke kisi bhi step pe dabao — us step ke customer yahin neeche khul jayenge (last call ke saath)</div><div id="lvFxNote"></div><div class="lvFun">'+LV_FN.map((n,i)=>(i?'<div class="lvFunPct"><span id="lvFp'+i+'"></span></div>':'')+'<div class="lvFunRow lvClick" data-lv-fstage="'+i+'" title="Dabao — customer list"><span class="lvFunName">'+n+' ›</span><div class="lvFunShape" style="--w:'+(100-i*11)+'%;background:'+LV_FC[i]+'"><span id="lvFv'+i+'"></span></div></div>').join('')+'</div>'+
       '<div class="lvFunSum"><div><span>100 me se kitne ne maal liya</span><b id="lvFsConv" style="color:#16a34a"></b><small>kul customer me se maal liya</small></div><div><span>Interested hain par maal abhi nahi liya</span><b id="lvFsPipe"></b><small id="lvFsPipeHow"></small></div><div><span>Maal liya</span><b id="lvFsWon" style="color:#2563eb"></b><small>customer</small></div></div>'+
       '<div class="lvAnd2"><div class="lvAndT">Andaza lagao — aage kitna maal bikega?</div><div class="small" style="margin-bottom:10px">1) Roz kitne alag customers ko call karoge, wo chuno. 2) Purane conversion % apne aap lagenge. Kisi bhi % ko badaloge toh uske baad ke estimates turant badlenge.</div>'+
-      '<div class="lvSl lvSlMain"><div class="lvSlTop"><span><i style="background:'+LV_FC[0]+'"></i>Rozana kitne customer ko call karoge?</span><span><button type="button" class="lvResetBtn" data-lv-plan150>150 ka andaza</button> <input type="number" aria-label="Rozana alag customers" id="lvSnN" min="0" step="1" class="lvNumIn"> <small id="lvSnNr">(abhi tak kul '+real[0]+' customer)</small></span></div><input type="range" id="lvSN" data-lv-sn min="0" max="'+nMax+'" step="1" style="--lv-slider-color:'+LV_FC[0]+'"></div>'+
+      '<div class="lvSl lvSlMain"><div class="lvSlTop"><span><i style="background:'+LV_FC[0]+'"></i>Rozana kitne customer ko call karoge?</span><span><input type="number" aria-label="Rozana alag customers" id="lvSnN" placeholder="Jaise 150" min="0" step="1" class="lvNumIn"> <small id="lvSnNr">(abhi tak kul '+real[0]+' customer)</small></span></div><input type="range" id="lvSN" data-lv-sn min="0" max="'+nMax+'" step="1" style="--lv-slider-color:'+LV_FC[0]+'"></div>'+
       '<div class="lvFunCtl">'+[1,2,3,4,5].map(j=>'<div class="lvSl"><div class="lvSlTop"><span><i style="background:'+LV_FC[j]+'"></i>'+LV_FQ[j]+'</span><b id="lvSr'+j+'"></b></div><input type="range" id="lvSP'+j+'" data-lv-sp="'+j+'" min="0" max="100" step="0.1" style="--lv-slider-color:'+LV_FC[j]+'"><div class="small" id="lvRateSource'+j+'"></div>'+'</div>').join('')+'</div>'+
       '<div class="lvPlan"><div class="lvAndT" style="font-size:15px">Team ko kya target dena hai</div><div style="overflow-x:auto"><table class="lvTable lvSimple lvPlanT"><thead><tr><th>Step</th><th>Rozana</th><th>Hafte me (6 din)</th><th>Mahine me (26 din)</th></tr></thead><tbody id="lvPlanBody"></tbody></table></div></div></div>';
     paintFunnel(real);if(keptF)ohDrillRestore();
@@ -1109,10 +1109,10 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     slider.style.setProperty('--lv-slider-progress',percent+'%');
   }
   function paintFunnel(real){
-    const P=lvPlan(),r=P?P.rates:lvRealRates(real),n=P?P.n:150,vf=lvFxValues(real),v=vf.map(x=>Math.round(x)), count=P?lvForecastCount:lvCnt;
+    const P=lvPlan(),r=P?P.rates:lvRealRates(real),n=P?P.n:0,vf=lvFxValues(real),v=vf.map(x=>Math.round(x)), count=P?lvForecastCount:lvCnt;
     v.forEach((x,i)=>{$('lvFv'+i).textContent=count(vf[i]);if(i)$('lvFp'+i).textContent=!P&&lvWeak(real,i)?'↓ data kam ('+real[i-1]+' me se '+real[i]+')':'↓ '+(P?r[i]:(v[i-1]?Math.round(x*100/v[i-1]):0))+'% aage badhe ('+count(vf[i])+')';});
-    const pb=$('lvPlanBody');if(pb&&!P)pb.innerHTML='<tr><td colspan="4" style="text-align:left;padding:12px">Target dekhne ke liye upar <b>"Rozana kitne customer ko call karoge"</b> me number daalo (jaise 150) ya <b>🔮 Apna plan</b> dabao.</td></tr>';else if(pb)pb.innerHTML=LV_FN.map((nm,i)=>'<tr'+(i===5?' class="lvTot"':'')+'><td><b>'+(i?nm:'Customer ko call')+'</b></td><td>'+count(vf[i])+'</td><td>'+count(vf[i]*6)+'</td><td>'+count(vf[i]*26)+'</td></tr>').join('');
-    const sn=$('lvSN');paintFunnelSlider(sn,n);const ni=$('lvSnN');if(ni&&document.activeElement!==ni)ni.value=Math.round(n);
+    const pb=$('lvPlanBody');if(pb&&!P)pb.innerHTML='<tr><td colspan="4" style="text-align:left;padding:12px">Target dekhne ke liye upar <b>"Rozana kitne customer ko call karoge"</b> me number daalo ya slider badlo.</td></tr>';else if(pb)pb.innerHTML=LV_FN.map((nm,i)=>'<tr'+(i===5?' class="lvTot"':'')+'><td><b>'+(i?nm:'Customer ko call')+'</b></td><td>'+count(vf[i])+'</td><td>'+count(vf[i]*6)+'</td><td>'+count(vf[i]*26)+'</td></tr>').join('');
+    const sn=$('lvSN');paintFunnelSlider(sn,n);const ni=$('lvSnN');if(ni&&document.activeElement!==ni)ni.value=P?Math.round(n):'';
     for(let j=1;j<6;j++){
       paintFunnelSlider($('lvSP'+j),r[j]);
       $('lvSr'+j).textContent=r[j]+'% ('+count(vf[j])+' customer)';
@@ -1199,10 +1199,6 @@ const LOGO_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAKEAAABuCAMAAAB4MYPlAAABCGlDQ1BJQ0MgUH
     const sst=e.target.closest('[data-lv-state]');if(sst){OH.anchor=sst;lvOpenState(sst.dataset.lvState);return;}
     const spr=e.target.closest('[data-lv-sper]');if(spr){LV.sPer=spr.dataset.lvSper;document.querySelectorAll('[data-lv-sper]').forEach(b=>b.classList.toggle('on',b===spr));renderStates();return;}
     const fst=e.target.closest('[data-lv-fstage]');if(fst){OH.anchor=fst;lvOpenStage(Number(fst.dataset.lvFstage));return;}
-    if(e.target.closest('[data-lv-plan150]')){
-      const real=lvFunnelData();if(!real)return;
-      LV.fx=lvPlan()||lvPlanStart(real);LV.fx.n=150;LV.mode='plan';paintFunnel(real);return;
-    }
     const rb=e.target.closest('[data-lv-freset]');if(rb){LV.mode='asli';LV.fPer='all';LV.fCrm='';LV.fFrom='';LV.fTo='';renderLive();
       const b2=document.querySelector('[data-lv-freset]');if(b2){b2.disabled=true;b2.textContent='Asli data aa raha hai…';}
       loadLive(true).then(()=>{const b3=document.querySelector('[data-lv-freset]');if(b3){b3.disabled=false;b3.textContent='✓ Asli data aa gaya';setTimeout(()=>{if(b3.isConnected)b3.textContent='↺ Asli data pe wapas';},1800);}});return;}
