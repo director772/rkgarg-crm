@@ -1131,3 +1131,108 @@ export async function getOwnerSummary(env, s) {
       outsideList: num(leadsAgg.total) - inApp - changed }
   };
 }
+
+/*
+ * "Saare number kahan hai" — har customer kis haal me hai aur CRM ke panel pe aayega ya nahi.
+ * Ek hi chhoti SQL (sirf ginti) — dashboard pe kholne par hi chalti hai.
+ */
+const ROT_CRM_OK = "CRM IN (SELECT TeamMemberName FROM Users WHERE Role='CRM' AND Active=1 AND COALESCE(TeamMemberName,'')<>'')";
+const ROT_POOL = "Status<>'closed' AND COALESCE(LastCallAt,'')='' AND COALESCE(NextFollowupAt,'')=''";
+const ROT_WHERE = {
+  naye: ROT_POOL,
+  abhi: `Status<>'closed' AND COALESCE(NextFollowupAt,'')<>'' AND NextFollowupAt<=?1 AND ${ROT_CRM_OK}`,
+  aage: `Status<>'closed' AND NextFollowupAt>?1 AND ${ROT_CRM_OK}`,
+  noDate: "Status<>'closed' AND COALESCE(NextFollowupAt,'')='' AND COALESCE(LastCallAt,'')<>''",
+  noCrm: `Status<>'closed' AND COALESCE(NextFollowupAt,'')<>'' AND NOT (${ROT_CRM_OK})`,
+  band: "Status='closed'"
+};
+export async function getRotation(env, s) {
+  requireOwner(s);
+  const db = env.DB, now = new Date(), nowIso = now.toISOString(), wk = new Date(now.getTime() - 7 * 86400000).toISOString();
+  const sum = k => `SUM(CASE WHEN ${ROT_WHERE[k]} THEN 1 ELSE 0 END) AS ${k}`;
+  const [a, held, crms, firstWeek] = await Promise.all([
+    first(db, `SELECT COUNT(*) AS total, ${Object.keys(ROT_WHERE).map(sum).join(', ')},
+        MIN(CASE WHEN ${ROT_POOL} THEN CreatedAt END) AS oldest,
+        SUM(CASE WHEN ${ROT_POOL} AND CreatedAt<?2 THEN 1 ELSE 0 END) AS old7
+      FROM Leads`, nowIso, wk),
+    first(db, 'SELECT COUNT(*) AS n FROM LeadClaims WHERE Until>?', now.getTime()),
+    all(db, "SELECT TeamMemberName AS n FROM Users WHERE Role='CRM' AND Active=1 AND COALESCE(TeamMemberName,'')<>''"),
+    first(db, 'SELECT COUNT(*) AS n FROM (SELECT LeadID FROM CallLog GROUP BY LeadID HAVING MIN(CallDate)>=?)', wk)
+  ]);
+  const n = v => Number(v) || 0, out = { total: n(a.total), held: n(held.n), crms: [...new Set(crms.map(r => String(r.n)))], firstWeek: n(firstWeek.n), old7: n(a.old7), oldest: a.oldest ? fmtDateTime(toIso(a.oldest)) : '', asOf: fmtDateTime(nowIso) };
+  Object.keys(ROT_WHERE).forEach(k => { out[k] = n(a[k]); });
+  out.oldestDays = a.oldest ? Math.floor((now - new Date(toIso(a.oldest))) / 86400000) : 0;
+  out.other = out.total - Object.keys(ROT_WHERE).reduce((t, k) => t + out[k], 0);
+  return out;
+}
+export async function getRotationList(env, s, which) {
+  requireOwner(s);
+  which = String(which || '');
+  if (!ROT_WHERE[which]) fail('Ye list nahi mili.');
+  const nowIso = new Date().toISOString();
+  const order = which === 'naye' ? 'CAST(Score AS REAL) DESC, CreatedAt, ID' : (which === 'abhi' || which === 'aage' || which === 'noCrm') ? 'NextFollowupAt' : 'LastCallAt DESC';
+  const rows = await all(env.DB, `SELECT ID, Name, Mobile, CRM, Disposition, LastCallAt, NextFollowupAt, CreatedAt, Note FROM Leads WHERE ${ROT_WHERE[which]} ORDER BY ${order} LIMIT 1001`, ...(ROT_WHERE[which].includes('?1') ? [nowIso] : []));
+  const list = rows.slice(0, 1000).map((l, i) => ({
+    id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || '',
+    lastCall: l.LastCallAt ? fmtDateTime(toIso(l.LastCallAt)) : '', nextDisplay: l.NextFollowupAt ? fmtDateTime(toIso(l.NextFollowupAt)) : '',
+    created: l.CreatedAt ? fmtDateTime(toIso(l.CreatedAt)) : '', note: l.Note || '', line: which === 'naye' ? i + 1 : 0
+  }));
+  return { which, total: list.length, rows: list, cut: rows.length > 1000 };
+}
+
+/*
+ * "Number dusre CRM ko do": jin customers pe kai din se call nahi hui (follow-up ka time nikle X din ho gaye,
+ * ya call hui par agli date nahi daali) — owner chun ke kisi chalu CRM ko de sakta hai.
+ * Naye (kabhi call nahi hui) number yahan nahi aate: wo pehle se sab CRM ki common line me hai.
+ */
+const STALE_SQL = `Status<>'closed' AND COALESCE(CRM,'')<>'' AND (
+    (COALESCE(NextFollowupAt,'')<>'' AND MAX(NextFollowupAt, COALESCE(LastCallAt,''))<=?1)
+    OR (COALESCE(NextFollowupAt,'')='' AND COALESCE(LastCallAt,'')<>'' AND LastCallAt<=?1))`;
+export async function getStaleCustomers(env, s, crm, days) {
+  requireOwner(s);
+  days = Math.max(0, Math.min(365, Math.floor(Number(days) || 0)));
+  crm = String(crm || '').trim();
+  const now = Date.now(), cut = new Date(now - days * 86400000).toISOString();
+  const [counts, rows, team] = await Promise.all([
+    all(env.DB, `SELECT CRM AS crm, COUNT(*) AS n FROM Leads WHERE ${STALE_SQL} GROUP BY CRM ORDER BY n DESC`, cut),
+    crm ? all(env.DB, `SELECT ID, Name, Mobile, CRM, Disposition, LastCallAt, NextFollowupAt, Note FROM Leads WHERE ${STALE_SQL} AND CRM=?2 ORDER BY MAX(COALESCE(NextFollowupAt,''), COALESCE(LastCallAt,'')) LIMIT 1001`, cut, crm) : Promise.resolve([]),
+    activeTeam(env.DB)
+  ]);
+  const list = rows.slice(0, 1000).map(l => {
+    const nx = toIso(l.NextFollowupAt), lc = toIso(l.LastCallAt), since = nx && lc ? (nx > lc ? nx : lc) : nx || lc;
+    return { id: String(l.ID), name: l.Name || '', mobile: l.Mobile || '', crm: l.CRM || '', response: l.Disposition || '',
+      lastCall: lc ? fmtDateTime(lc) : '', nextDisplay: nx ? fmtDateTime(nx) : '', noDate: !nx,
+      lateDays: since ? Math.max(0, Math.floor((now - Date.parse(since)) / 86400000)) : 0, note: l.Note || '' };
+  });
+  return { crm, days, counts: counts.map(c => ({ crm: String(c.crm || ''), n: Number(c.n) || 0, active: team.includes(String(c.crm || '')) })), team, rows: list, total: list.length, cut: rows.length > 1000 };
+}
+export async function updateCustomersCrm(env, s, payload, requestId) {
+  requireOwner(s);
+  const p = payload || {};
+  const to = String(p.to || '').trim();
+  const ids = [...new Set((Array.isArray(p.ids) ? p.ids : []).map(x => String(x || '').trim()).filter(Boolean))];
+  if (!ids.length) fail('Pehle customer chuno.');
+  if (ids.length > 500) fail('Ek baar me 500 tak customer transfer karo.');
+  if (!(await activeTeam(env.DB)).includes(to)) fail('Jis CRM ko dena hai wo chalu CRM chuno.');
+  return operation(env, s, 'TRANSFER_SELECTED', requestId, { ids, to, requestId }, async () => {
+    const db = env.DB, stamp = new Date().toISOString(), rows = [];
+    for (let i = 0; i < ids.length; i += 90) {
+      const part = ids.slice(i, i + 90);
+      rows.push(...await all(db, `SELECT ID, CRM, Status, NextFollowupAt FROM Leads WHERE ID IN (${part.map(() => '?').join(',')})`, ...part));
+    }
+    const move = rows.filter(r => String(r.Status || '') !== 'closed' && String(r.CRM || '') !== to);
+    const byFrom = {};
+    move.forEach(r => { const f = String(r.CRM || '(CRM khaali)'); byFrom[f] = (byFrom[f] || 0) + 1; });
+    const statements = [];
+    move.forEach(r => {
+      const id = String(r.ID);
+      // Date khaali ho to aaj ki date daal do — warna naye CRM ke panel pe bhi nahi aayega.
+      statements.push(stmt(db, "UPDATE Leads SET CRM=?, NextFollowupAt=CASE WHEN COALESCE(NextFollowupAt,'')='' THEN ? ELSE NextFollowupAt END, RowVersion=RowVersion+1, LastUpdatedAt=?, LastUpdatedBy=?, LastReq='' WHERE ID=? AND COALESCE(Status,'')<>'closed'", to, stamp, stamp, s.username, id));
+      statements.push(stmt(db, "UPDATE Visits SET CRM=?, Version=Version+1, UpdatedAt=?, UpdatedBy=? WHERE LeadID=? AND Status IN ('Planned','Rescheduled')", to, stamp, s.username, id));
+    });
+    if (move.length) statements.push(auditStmt(db, s.username, 'TRANSFER_SELECTED', 'Lead', move.length === 1 ? String(move[0].ID) : move.length + ' customers', { to, from: byFrom, ids: move.map(r => String(r.ID)) }, stamp));
+    const skipped = ids.length - move.length;
+    return { result: { success: true, moved: move.length, skipped, to, from: byFrom,
+      message: move.length + ' customer ab ' + to + ' ke paas hai — uske panel pe abhi dikhenge.' + (skipped ? ' ' + skipped + ' customer chhod diye (band ho chuke ya pehle se ' + to + ' ke paas).' : '') }, statements };
+  });
+}
